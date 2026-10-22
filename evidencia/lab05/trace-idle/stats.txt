@@ -1,0 +1,33 @@
+trace-idle: 46635 events over 3101.820 ms
+link losses: 1 resyncs, 78 bytes skipped
+gaps > 1.5 ms: 1, 7.9 ms in total (0.3 % of the span)
+switched_out 4752  switched_in 4752
+
+Context switch (switched_out -> switched_in, <= 30 us; 349 longer pairs had the tracer in between)
+  all                                n= 2081  min=   9.88  median=  11.25  p99=  14.75  max=  14.81 us
+  idle -> sampling_tid               n=  772  min=   9.88  median=  10.75  p99=  10.75  max=  12.75 us
+  sampling_tid -> console_tid        n=  515  min=  13.44  median=  14.31  p99=  14.62  max=  14.62 us
+  sampling_tid -> control_tid        n=  309  min=  13.62  median=  14.50  p99=  14.81  max=  14.81 us
+  sampling_tid -> idle               n=  269  min=  10.38  median=  11.19  p99=  11.25  max=  11.25 us
+  control_tid -> idle                n=  113  min=  10.38  median=  11.19  p99=  11.25  max=  11.25 us
+  sampling_tid -> display_tid        n=   53  min=  13.62  median=  14.50  p99=  14.62  max=  14.62 us
+  console_tid -> idle                n=   37  min=  10.38  median=  11.25  p99=  11.25  max=  11.25 us
+  control_tid -> display_tid         n=    6  min=  13.62  median=  14.44  p99=  14.50  max=  14.50 us
+
+Tick ISR -> sampling (3093 ticks)
+  isr_enter -> sampling ready      n= 3093  min=  15.06  median=  15.25  p99=  54.88  max=  55.00 us
+  isr_enter -> isr_exit            n= 3093  min=  27.62  median=  28.62  p99=  68.25  max=  68.38 us
+  isr_enter -> sampling switched in n= 3093  min=  47.00  median=  48.00  p99=  89.88  max=  90.00 us
+  sampling switched in -> pend     n= 3092  min=  54.81  median=  59.50  p99=  83.88  max=  84.00 us
+  ticks in which sampling gives control_sem: 309
+  threads readied in the same tick ISR: {'tracing_thread': 350, 'console_tid': 515, 'display_tid': 59, 'telemetry_tid': 3}
+
+CPU per thread over 3101.8 ms (gaps included)
+  idle              14.36 %
+  sampling_tid       7.39 %
+  console_tid        0.83 %
+  control_tid        0.73 %
+  display_tid        0.07 %
+  telemetry_tid      0.05 %
+  (no lane)         76.56 %   tracing_thread, whose events are dropped, plus link losses
+  ISRs, inside the rows above: 3.37 %

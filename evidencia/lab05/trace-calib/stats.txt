@@ -1,0 +1,78 @@
+trace-calib: 39647 events over 3083.101 ms
+link losses: 2 resyncs, 76 bytes skipped
+gaps > 1.5 ms: 2, 461.2 ms in total (15.0 % of the span)
+  at t=  632.060 ms:  423.000 ms without events
+  at t= 2394.138 ms:   38.158 ms without events
+switched_out 4013  switched_in 4012
+
+Context switch (switched_out -> switched_in, <= 30 us; 243 longer pairs had the tracer in between)
+  all                                n= 1805  min=   9.88  median=  11.25  p99=  14.75  max=  15.12 us
+  idle -> sampling_tid               n=  548  min=   9.88  median=  10.75  p99=  10.75  max=  11.25 us
+  sampling_tid -> console_tid        n=  458  min=  13.44  median=  14.31  p99=  14.62  max=  14.62 us
+  sampling_tid -> control_tid        n=  262  min=  13.50  median=  14.50  p99=  14.81  max=  15.12 us
+  sampling_tid -> idle               n=  184  min=  10.38  median=  11.19  p99=  11.25  max=  11.25 us
+  console_tid -> sampling_tid        n=   75  min=   9.88  median=  10.75  p99=  10.75  max=  10.75 us
+  control_tid -> idle                n=   65  min=  10.38  median=  11.19  p99=  11.25  max=  11.25 us
+  sampling_tid -> display_tid        n=   47  min=  13.44  median=  14.44  p99=  14.62  max=  14.62 us
+  console_tid -> idle                n=   46  min=  10.38  median=  11.22  p99=  11.25  max=  11.25 us
+
+Tick ISR -> sampling (2619 ticks)
+  isr_enter -> sampling ready      n= 2619  min=  15.06  median=  15.25  p99=  54.56  max=  66.69 us
+  isr_enter -> isr_exit            n= 2619  min=  27.56  median=  28.62  p99=  67.75  max=  79.88 us
+  isr_enter -> sampling switched in n= 2619  min=  47.00  median=  48.00  p99=  89.38  max= 101.38 us
+  sampling switched in -> pend     n= 2619  min=  54.81  median=  59.50  p99=  83.88  max=  84.00 us
+  ticks in which sampling gives control_sem: 262
+  threads readied in the same tick ISR: {'tracing_thread': 244, 'console_tid': 419, 'display_tid': 52, 'telemetry_tid': 3}
+
+CPU per thread over 3083.1 ms (gaps included)
+  idle              10.24 %
+  sampling_tid       7.54 %
+  console_tid        2.64 %
+  telemetry_tid      1.03 %
+  control_tid        0.63 %
+  display_tid        0.06 %
+  (no lane)         77.85 %   tracing_thread, whose events are dropped, plus link losses
+  ISRs, inside the rows above: 0.68 %
+
+Longest gap: 423.0 ms. Console busy since its last wake-up at t=556.244 ms: 75.8 ms of it visible
+  ticks in that window that preempt the console: 75
+
+Tick inside calib:
+  +    0.00 us  (t= 590.0604 ms)  isr_enter                                      
+  +   15.12 us  (t= 590.0756 ms)  thread_sched_ready             sampling_tid    
+  +   28.31 us  (t= 590.0888 ms)  isr_exit                                       
+  +   39.19 us  (t= 590.0996 ms)  thread_switched_out            console_tid     
+  +   49.94 us  (t= 590.1104 ms)  thread_switched_in             sampling_tid    
+  +   59.62 us  (t= 590.1201 ms)  gpio_port_set_bits_raw_enter                   port=0x42800ad8  pins=8
+  +   66.62 us  (t= 590.1271 ms)  gpio_port_set_bits_raw_exit                    port=0x42800ad8  ret=0
+  +   74.62 us  (t= 590.1351 ms)  gpio_port_clear_bits_raw_enter                 port=0x42800ad8  pins=4
+  +   81.56 us  (t= 590.1420 ms)  gpio_port_clear_bits_raw_exit                  port=0x42800ad8  ret=0
+  +   88.00 us  (t= 590.1484 ms)  gpio_port_clear_bits_raw_enter                 port=0x42800ad8  pins=8
+  +   95.00 us  (t= 590.1554 ms)  gpio_port_clear_bits_raw_exit                  port=0x42800ad8  ret=0
+  +  107.62 us  (t= 590.1681 ms)  thread_sched_pend              sampling_tid    
+  +  120.81 us  (t= 590.1812 ms)  thread_switched_out            sampling_tid    
+  +  134.31 us  (t= 590.1947 ms)  thread_switched_in             console_tid     
+  +  389.06 us  (t= 590.4495 ms)  thread_busy_wait_exit                          usec_to_wait=400
+  +  396.62 us  (t= 590.4571 ms)  thread_busy_wait_enter                         usec_to_wait=400
+  +  804.06 us  (t= 590.8645 ms)  thread_busy_wait_exit                          usec_to_wait=400
+Tick inside calib with k_sem_give:
+  +    0.00 us  (t= 582.0604 ms)  isr_enter                                      
+  +   15.25 us  (t= 582.0756 ms)  thread_sched_ready             sampling_tid    
+  +   27.62 us  (t= 582.0880 ms)  isr_exit                                       
+  +   38.56 us  (t= 582.0989 ms)  thread_switched_out            console_tid     
+  +   48.50 us  (t= 582.1089 ms)  thread_switched_in             sampling_tid    
+  +   59.00 us  (t= 582.1194 ms)  gpio_port_set_bits_raw_enter                   port=0x42800ad8  pins=8
+  +   65.62 us  (t= 582.1260 ms)  gpio_port_set_bits_raw_exit                    port=0x42800ad8  ret=0
+  +   74.00 us  (t= 582.1344 ms)  gpio_port_set_bits_raw_enter                   port=0x42800ad8  pins=4
+  +   80.62 us  (t= 582.1410 ms)  gpio_port_set_bits_raw_exit                    port=0x42800ad8  ret=0
+  +   87.38 us  (t= 582.1477 ms)  gpio_port_clear_bits_raw_enter                 port=0x42800ad8  pins=8
+  +   94.00 us  (t= 582.1544 ms)  gpio_port_clear_bits_raw_exit                  port=0x42800ad8  ret=0
+  +  100.75 us  (t= 582.1611 ms)  semaphore_give_enter                           id=0x4080bafc
+  +  109.31 us  (t= 582.1697 ms)  thread_sched_ready             control_tid     
+  +  118.00 us  (t= 582.1784 ms)  semaphore_give_exit                            id=0x4080bafc
+  +  130.62 us  (t= 582.1910 ms)  thread_sched_pend              sampling_tid    
+  +  143.81 us  (t= 582.2042 ms)  thread_switched_out            sampling_tid    
+  +  157.31 us  (t= 582.2177 ms)  thread_switched_in             control_tid     
+  +  165.62 us  (t= 582.2260 ms)  semaphore_take_exit                            id=0x4080bafc  timeout=4294966296  ret=0
+  +  172.12 us  (t= 582.2325 ms)  gpio_port_set_bits_raw_enter                   port=0x42800ad8  pins=16
+  +  179.12 us  (t= 582.2395 ms)  gpio_port_set_bits_raw_exit                    port=0x42800ad8  ret=0

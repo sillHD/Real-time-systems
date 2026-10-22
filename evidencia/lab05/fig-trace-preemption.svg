@@ -1,0 +1,172 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 936" width="1120" font-family="ui-monospace,Menlo,Consolas,monospace">
+<rect width="1120" height="936" fill="#fbfaf8"/>
+<text x="170" y="32" font-size="17" font-weight="700" fill="#1a1a1a">The story of one preemption, from the trace</text>
+<text x="170" y="54" font-size="12.5" fill="#555">ESP32-C6 kernel node, CTF over the UART jack at 4 Mbaud · rendered from trace-calib/channel0_0 · solid = running, dashed = ready</text>
+<text x="170" y="84" font-size="14" font-weight="700" fill="#1a1a1a">One tick inside calib at t = 590.060 ms: the console is preempted</text>
+<line x1="170" y1="104" x2="1090" y2="104" stroke="#bbb"/>
+<line x1="170.0" y1="99" x2="170.0" y2="104" stroke="#bbb"/>
+<text x="170.0" y="95" font-size="11" fill="#666" text-anchor="middle">+0 us</text>
+<line x1="285.0" y1="99" x2="285.0" y2="104" stroke="#bbb"/>
+<text x="285.0" y="95" font-size="11" fill="#666" text-anchor="middle">+25 us</text>
+<line x1="400.0" y1="99" x2="400.0" y2="104" stroke="#bbb"/>
+<text x="400.0" y="95" font-size="11" fill="#666" text-anchor="middle">+50 us</text>
+<line x1="515.0" y1="99" x2="515.0" y2="104" stroke="#bbb"/>
+<text x="515.0" y="95" font-size="11" fill="#666" text-anchor="middle">+75 us</text>
+<line x1="630.0" y1="99" x2="630.0" y2="104" stroke="#bbb"/>
+<text x="630.0" y="95" font-size="11" fill="#666" text-anchor="middle">+100 us</text>
+<line x1="745.0" y1="99" x2="745.0" y2="104" stroke="#bbb"/>
+<text x="745.0" y="95" font-size="11" fill="#666" text-anchor="middle">+125 us</text>
+<line x1="860.0" y1="99" x2="860.0" y2="104" stroke="#bbb"/>
+<text x="860.0" y="95" font-size="11" fill="#666" text-anchor="middle">+150 us</text>
+<line x1="975.0" y1="99" x2="975.0" y2="104" stroke="#bbb"/>
+<text x="975.0" y="95" font-size="11" fill="#666" text-anchor="middle">+175 us</text>
+<line x1="1090.0" y1="99" x2="1090.0" y2="104" stroke="#bbb"/>
+<text x="1090.0" y="95" font-size="11" fill="#666" text-anchor="middle">+200 us</text>
+<text x="12" y="142" font-size="12.5" font-weight="700" fill="#1a1a1a">[ISR]</text>
+<text x="12" y="154" font-size="10.5" fill="#777">tick ISR</text>
+<line x1="170" y1="150" x2="1090" y2="150" stroke="#ddd"/>
+<text x="12" y="176" font-size="12.5" font-weight="700" fill="#1a1a1a">sampling_tid</text>
+<text x="12" y="188" font-size="10.5" fill="#777">prio 2</text>
+<line x1="170" y1="184" x2="1090" y2="184" stroke="#ddd"/>
+<text x="12" y="210" font-size="12.5" font-weight="700" fill="#1a1a1a">control_tid</text>
+<text x="12" y="222" font-size="10.5" fill="#777">prio 3</text>
+<line x1="170" y1="218" x2="1090" y2="218" stroke="#ddd"/>
+<text x="12" y="244" font-size="12.5" font-weight="700" fill="#1a1a1a">console_tid</text>
+<text x="12" y="256" font-size="10.5" fill="#777">prio 9</text>
+<line x1="170" y1="252" x2="1090" y2="252" stroke="#ddd"/>
+<text x="12" y="278" font-size="12.5" font-weight="700" fill="#1a1a1a">instr_samp</text>
+<text x="12" y="290" font-size="10.5" fill="#777">GPIO3 pin</text>
+<line x1="170" y1="286" x2="1090" y2="286" stroke="#ddd"/>
+<text x="12" y="312" font-size="12.5" font-weight="700" fill="#1a1a1a">instr_ctrl</text>
+<text x="12" y="324" font-size="10.5" fill="#777">GPIO4 pin</text>
+<line x1="170" y1="320" x2="1090" y2="320" stroke="#ddd"/>
+<rect x="170.00" y="132" width="130.24" height="18" fill="#b3541e"/>
+<rect x="399.71" y="166" width="326.03" height="18" fill="#1f5c8b"/>
+<rect x="350.26" y="238" width="437.57" height="14" fill="#6b6b6b" opacity="0.18" stroke="#6b6b6b" stroke-dasharray="3 2"/>
+<rect x="787.84" y="234" width="302.16" height="18" fill="#6b6b6b"/>
+<rect x="476.48" y="268" width="130.52" height="18" fill="#1f5c8b"/>
+<line x1="170.0" y1="118" x2="170.0" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="170.0" cy="110" r="8" fill="#d92b2b"/>
+<text x="170.0" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+<text x="170" y="344" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">1</tspan>  +  0.00 us  tick ISR enters</text>
+<line x1="239.6" y1="118" x2="239.6" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="239.6" cy="110" r="8" fill="#d92b2b"/>
+<text x="239.6" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+<text x="170" y="360" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">2</tspan>  + 15.12 us  k_msgq_put: sampling ready</text>
+<line x1="300.2" y1="118" x2="300.2" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="300.2" cy="110" r="8" fill="#d92b2b"/>
+<text x="300.2" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+<text x="170" y="376" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">3</tspan>  + 28.31 us  ISR exits</text>
+<line x1="350.3" y1="118" x2="350.3" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="350.3" cy="110" r="8" fill="#d92b2b"/>
+<text x="350.3" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+<text x="170" y="392" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">4</tspan>  + 39.19 us  console_tid preempted: ready, not blocked</text>
+<line x1="399.7" y1="118" x2="399.7" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="399.7" cy="110" r="8" fill="#d92b2b"/>
+<text x="399.7" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">5</text>
+<text x="170" y="408" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">5</tspan>  + 49.94 us  sampling switched in</text>
+<line x1="476.5" y1="118" x2="476.5" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="476.5" cy="110" r="8" fill="#d92b2b"/>
+<text x="476.5" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">6</text>
+<text x="170" y="424" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">6</tspan>  + 66.62 us  instr_samp rises</text>
+<line x1="665.1" y1="118" x2="665.1" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="665.1" cy="110" r="8" fill="#d92b2b"/>
+<text x="665.1" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">7</text>
+<text x="640" y="344" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">7</tspan>  +107.62 us  k_msgq_get: sampling pends</text>
+<line x1="787.8" y1="118" x2="787.8" y2="322" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="787.8" cy="110" r="8" fill="#d92b2b"/>
+<text x="787.8" y="113" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">8</text>
+<text x="640" y="360" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">8</tspan>  +134.31 us  CPU to console_tid</text>
+<text x="170" y="450" font-size="12" font-weight="700" fill="#555">tick ISR to sampling switched in: 49.94 us (lat_peak_us 68 us traced, 16 us untraced)</text>
+<text x="170" y="508" font-size="14" font-weight="700" fill="#1a1a1a">A 10th tick at t = 582.060 ms: k_sem_give sends the CPU to control</text>
+<line x1="170" y1="528" x2="1090" y2="528" stroke="#bbb"/>
+<line x1="170.0" y1="523" x2="170.0" y2="528" stroke="#bbb"/>
+<text x="170.0" y="519" font-size="11" fill="#666" text-anchor="middle">+0 us</text>
+<line x1="285.0" y1="523" x2="285.0" y2="528" stroke="#bbb"/>
+<text x="285.0" y="519" font-size="11" fill="#666" text-anchor="middle">+25 us</text>
+<line x1="400.0" y1="523" x2="400.0" y2="528" stroke="#bbb"/>
+<text x="400.0" y="519" font-size="11" fill="#666" text-anchor="middle">+50 us</text>
+<line x1="515.0" y1="523" x2="515.0" y2="528" stroke="#bbb"/>
+<text x="515.0" y="519" font-size="11" fill="#666" text-anchor="middle">+75 us</text>
+<line x1="630.0" y1="523" x2="630.0" y2="528" stroke="#bbb"/>
+<text x="630.0" y="519" font-size="11" fill="#666" text-anchor="middle">+100 us</text>
+<line x1="745.0" y1="523" x2="745.0" y2="528" stroke="#bbb"/>
+<text x="745.0" y="519" font-size="11" fill="#666" text-anchor="middle">+125 us</text>
+<line x1="860.0" y1="523" x2="860.0" y2="528" stroke="#bbb"/>
+<text x="860.0" y="519" font-size="11" fill="#666" text-anchor="middle">+150 us</text>
+<line x1="975.0" y1="523" x2="975.0" y2="528" stroke="#bbb"/>
+<text x="975.0" y="519" font-size="11" fill="#666" text-anchor="middle">+175 us</text>
+<line x1="1090.0" y1="523" x2="1090.0" y2="528" stroke="#bbb"/>
+<text x="1090.0" y="519" font-size="11" fill="#666" text-anchor="middle">+200 us</text>
+<text x="12" y="566" font-size="12.5" font-weight="700" fill="#1a1a1a">[ISR]</text>
+<text x="12" y="578" font-size="10.5" fill="#777">tick ISR</text>
+<line x1="170" y1="574" x2="1090" y2="574" stroke="#ddd"/>
+<text x="12" y="600" font-size="12.5" font-weight="700" fill="#1a1a1a">sampling_tid</text>
+<text x="12" y="612" font-size="10.5" fill="#777">prio 2</text>
+<line x1="170" y1="608" x2="1090" y2="608" stroke="#ddd"/>
+<text x="12" y="634" font-size="12.5" font-weight="700" fill="#1a1a1a">control_tid</text>
+<text x="12" y="646" font-size="10.5" fill="#777">prio 3</text>
+<line x1="170" y1="642" x2="1090" y2="642" stroke="#ddd"/>
+<text x="12" y="668" font-size="12.5" font-weight="700" fill="#1a1a1a">console_tid</text>
+<text x="12" y="680" font-size="10.5" fill="#777">prio 9</text>
+<line x1="170" y1="676" x2="1090" y2="676" stroke="#ddd"/>
+<text x="12" y="702" font-size="12.5" font-weight="700" fill="#1a1a1a">instr_samp</text>
+<text x="12" y="714" font-size="10.5" fill="#777">GPIO3 pin</text>
+<line x1="170" y1="710" x2="1090" y2="710" stroke="#ddd"/>
+<text x="12" y="736" font-size="12.5" font-weight="700" fill="#1a1a1a">instr_ctrl</text>
+<text x="12" y="748" font-size="10.5" fill="#777">GPIO4 pin</text>
+<line x1="170" y1="744" x2="1090" y2="744" stroke="#ddd"/>
+<rect x="170.00" y="556" width="127.07" height="18" fill="#b3541e"/>
+<rect x="393.10" y="590" width="438.44" height="18" fill="#1f5c8b"/>
+<rect x="672.84" y="628" width="220.80" height="14" fill="#2e7d4f" opacity="0.18" stroke="#2e7d4f" stroke-dasharray="3 2"/>
+<rect x="893.64" y="624" width="196.36" height="18" fill="#2e7d4f"/>
+<rect x="347.39" y="662" width="742.61" height="14" fill="#6b6b6b" opacity="0.18" stroke="#6b6b6b" stroke-dasharray="3 2"/>
+<rect x="471.88" y="692" width="130.52" height="18" fill="#1f5c8b"/>
+<rect x="993.98" y="726" width="96.02" height="18" fill="#2e7d4f"/>
+<line x1="170.0" y1="542" x2="170.0" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="170.0" cy="534" r="8" fill="#d92b2b"/>
+<text x="170.0" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">1</text>
+<text x="170" y="768" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">1</tspan>  +  0.00 us  tick ISR enters</text>
+<line x1="240.1" y1="542" x2="240.1" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="240.1" cy="534" r="8" fill="#d92b2b"/>
+<text x="240.1" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">2</text>
+<text x="170" y="784" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">2</tspan>  + 15.25 us  k_msgq_put: sampling ready</text>
+<line x1="297.1" y1="542" x2="297.1" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="297.1" cy="534" r="8" fill="#d92b2b"/>
+<text x="297.1" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">3</text>
+<text x="170" y="800" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">3</tspan>  + 27.62 us  ISR exits</text>
+<line x1="347.4" y1="542" x2="347.4" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="347.4" cy="534" r="8" fill="#d92b2b"/>
+<text x="347.4" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">4</text>
+<text x="170" y="816" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">4</tspan>  + 38.56 us  console_tid preempted: ready, not blocked</text>
+<line x1="393.1" y1="542" x2="393.1" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="393.1" cy="534" r="8" fill="#d92b2b"/>
+<text x="393.1" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">5</text>
+<text x="170" y="832" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">5</tspan>  + 48.50 us  sampling switched in</text>
+<line x1="471.9" y1="542" x2="471.9" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="471.9" cy="534" r="8" fill="#d92b2b"/>
+<text x="471.9" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">6</text>
+<text x="170" y="848" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">6</tspan>  + 65.62 us  instr_samp rises</text>
+<line x1="633.5" y1="542" x2="633.5" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="633.5" cy="534" r="8" fill="#d92b2b"/>
+<text x="633.5" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">7</text>
+<text x="640" y="768" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">7</tspan>  +100.75 us  k_sem_give(control_sem)</text>
+<line x1="672.8" y1="542" x2="672.8" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="672.8" cy="534" r="8" fill="#d92b2b"/>
+<text x="672.8" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">8</text>
+<text x="640" y="784" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">8</tspan>  +109.31 us  control ready: prio 3, waits for sampling (prio 2)</text>
+<line x1="770.9" y1="542" x2="770.9" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="770.9" cy="534" r="8" fill="#d92b2b"/>
+<text x="770.9" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">9</text>
+<text x="640" y="800" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">9</tspan>  +130.62 us  k_msgq_get: sampling pends</text>
+<line x1="893.6" y1="542" x2="893.6" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="893.6" cy="534" r="8" fill="#d92b2b"/>
+<text x="893.6" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">10</text>
+<text x="640" y="816" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">10</tspan>  +157.31 us  CPU to control_tid</text>
+<line x1="994.0" y1="542" x2="994.0" y2="746" stroke="#d92b2b" stroke-width="1" stroke-dasharray="3 3" opacity="0.7"/>
+<circle cx="994.0" cy="534" r="8" fill="#d92b2b"/>
+<text x="994.0" y="537" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">11</text>
+<text x="640" y="832" font-size="11.5" fill="#1a1a1a"><tspan font-weight="700" fill="#d92b2b">11</tspan>  +179.12 us  instr_ctrl rises</text>
+<text x="170" y="874" font-size="12" font-weight="700" fill="#555">tick ISR to sampling switched in: 48.50 us (lat_peak_us 68 us traced, 16 us untraced)</text>
+<text x="170" y="892" font-size="12" font-weight="700" fill="#555">instr_samp falls to instr_ctrl rises: 85.12 us (analyzer, untraced: 14.50 us)</text>
+</svg>

@@ -1,0 +1,12 @@
+
+>>> calib
+calib
+calibrating zero-flow offset (1000 rounds)...
+calibration done
+t=759044 p_mv=1486 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+
+>>> status
+statust=761044 p_mv=1486 sp_mv=1500 duty=47 flow_x100=0 estop=0 backlog=0
+
+p=1491 mV sp=1500 mV duty=46% flow_x100=0 estop=0 batches=0 backlog_peak=0 lat_peak_us=68 ticks_dropped=0 ctrl_missed=0
+t=762044 p_mv=1506 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0

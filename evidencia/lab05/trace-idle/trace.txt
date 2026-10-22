@@ -1,0 +1,44 @@
+Zephyr CTF trace  (32885 events, 7 threads, 2180.882ms span)
+t0 = 40086.239ms   t1 = 42267.120ms
+
+states: █=run  ▓=ready  ▒=blocked  ░=sleep  —=susp
+
+               0                                                              2180.882ms
+THREAD         |.........|.........|.........|.........|.........|.........|.........|..
+idle           ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+sampling_tid   ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+control_tid    ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+console_tid    ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+display_tid     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+telemetry_tid                                  ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+tracing_thread ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+[ISR]          ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+
+Threads
+  handle      name               prio  stack_base   stack_sz
+  0x40810a70  idle                                          
+  0x40810660  sampling_tid                                  
+  0x40810528  control_tid                                   
+  0x40810180  console_tid                                   
+  0x408103f0  display_tid                                   
+  0x408102b8  telemetry_tid                                 
+  0x40810928  tracing_thread                                
+
+Event counts
+     3649  gpio_port_clear_bits_raw_enter
+     3649  gpio_port_clear_bits_raw_exit
+     3351  thread_switched_out
+     3350  thread_switched_in
+     3334  gpio_port_set_bits_raw_enter
+     3334  gpio_port_set_bits_raw_exit
+     3054  thread_sched_ready
+     2399  thread_sched_pend
+     2183  isr_exit
+     2182  isr_enter
+      466  semaphore_give_enter
+      466  semaphore_give_exit
+      407  thread_sleep_ticks_exit
+      407  thread_sleep_ticks_enter
+      218  semaphore_take_exit
+      218  semaphore_take_enter
+      218  semaphore_take_blocking
