@@ -1,0 +1,23 @@
+/*
+ * ESP32-C6-DevKitC-1 pins for week 6 Task A, on the node's first four
+ * analyzer channels (D0..D3 = GPIO3, 4, 5, 6, same cables as weeks 3 to 5).
+ *
+ * The board enables i2c0 on GPIO6/GPIO7. Nothing here uses I2C, so it is
+ * switched off and GPIO6 is a plain output.
+ */
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+&i2c0 {
+	status = "disabled";
+};
+
+/ {
+	instr {
+		compatible = "gpio-leds";
+		tau1_run: tau1_run { gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>; };
+		tau2_run: tau2_run { gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>; };
+		tau1_miss: tau1_miss { gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>; };
+		tau2_miss: tau2_miss { gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>; };
+	};
+};

@@ -1,0 +1,29 @@
+Week 6 Task C: calib, duration and the console thread's own CPU time
+ESP32-C6, firmware/kernel, 2026-10-21. Three runs of `calib` per build, console output:
+"calibration done (<duration> ms, CPU <us> us)". CPU comes from the kernel's
+per-thread runtime counters (k_thread_runtime_stats_get on the console thread,
+on since week 4 because CONFIG_THREAD_ANALYZER selects them).
+
+before (k_busy_wait(400), 1 kHz tick)       build-lab06-kernel
+calibration done (403 ms, CPU 395959 us)
+calibration done (403 ms, CPU 396109 us)
+calibration done (403 ms, CPU 396048 us)
+
+ADR-005 at the C6's 1 kHz tick              build-lab06-adr005
+calibration done (2000 ms, CPU 13389 us)
+calibration done (2000 ms, CPU 13386 us)
+calibration done (2000 ms, CPU 13385 us)
+
+ADR-005 at a 10 kHz tick (final)            build-lab06-adr005-10k
+calibration done (500 ms, CPU 10584 us)
+calibration done (500 ms, CPU 10583 us)
+calibration done (500 ms, CPU 10583 us)
+
+Reading:
+- before: CPU = 98.2 % of the duration; the other 7 ms are the threads above
+  the console preempting it. The analyzer agrees: console pulse 403.457 ms.
+- k_usleep(400) rounds up to whole ticks plus one: 2 ticks = 2 ms at 1 kHz,
+  5 ticks = 0.5 ms at 10 kHz. 1000 settles: 2000 ms (misses the 1 s deadline
+  on duration alone) or 500 ms (fits).
+- after: 10.6 us of CPU per settle (read + sleep + two switches), 1000 x =
+  10.6 ms, against 396 ms spinning.

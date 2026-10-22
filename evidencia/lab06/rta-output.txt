@@ -1,0 +1,25 @@
+Task set: analysis/taskset.csv
+
+task         prio     C_i us     T_i us     D_i us       U_i
+sampling        2      36.75       1000       1000   0.03675
+control         3      31.25      10000      10000   0.00313
+flow_batch      5     106.75     200000     200000   0.00053
+display         7      29.00      50000      50000   0.00058
+telemetry       8     142.50    1000000    1100000   0.00014
+console         9   10613.00    1000000    1000000   0.01061
+
+U = 0.05174  (5.174 % of the CPU)
+Liu & Layland, n = 6: U <= 0.7348  -> pass
+Hyperbolic: prod(U_i + 1) = 1.05235 <= 2  -> pass
+EDF (D >= T): U <= 1  -> pass
+
+RTA, blocking on (PI lock users: control, console; ceiling prio 3)
+task            B_i us     S_i us       R_i us     D_i us  verdict   iterations
+sampling          0.00          0        36.75       1000  R <= D    36.75
+control        1195.00          0      1299.75      10000  R <= D    1226.25 -> 1299.75
+flow_batch     1195.00          0      1406.50     200000  R <= D    1301.75 -> 1406.50
+display        1195.00          0      1435.50      50000  R <= D    1224.00 -> 1435.50
+telemetry      1195.00          0      1578.00    1100000  R <= D    1337.50 -> 1578.00
+console           0.00     489400    521634.50    1000000  R <= D    500013.00 -> 520800.25 -> 521597.75 -> 521634.50
+
+Every task meets its deadline.

@@ -1,0 +1,16 @@
+Task B, mutex: taskB-mutex-5s-4MHz.vcd
+capture 5.000 s, 500 control jobs, 4 lock holds by the console
+control R (sampling rise -> ctrl fall), min / mean / max: 19.25 / 23.61 / 405.25 us
+control pulse (start -> end, lock wait included): 2.00 / 5.99 / 387.75 us
+control R > 10 ms (deadline): 0
+telemetry line (not the medium busy work): 103.25 / 103.35 / 103.50 us
+
+per round (us; t = 0 at the console taking the lock):
+  control asks   medium runs (start..end)   lock released   control ends     B (lock width)   control R
+        827.2     1231.8.. 21236.2           1195.8        1214.8           1195.8       405.0
+        826.2     1229.8.. 21235.0           1193.8        1213.0           1193.8       404.0
+        827.5     1231.8.. 21236.8           1195.8        1215.0           1195.8       405.2
+        826.2     1230.8.. 21235.5           1194.8        1214.0           1194.8       405.2
+B (lock width): 1193.75 / 1195.00 / 1195.75 us
+control R in these rounds: 404.00 / 404.88 / 405.25 us
+rounds where the medium ran while the console held the lock: 0 of 4

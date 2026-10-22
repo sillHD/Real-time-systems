@@ -3,8 +3,9 @@
 **Team:** Joshua · David Henao Rojas · Ismael Cortés Ramírez
 **Boards:** NUCLEO-L476RG (weeks 1–2) · ESP32-C6-DevKitC (from week 3)
 **Optional comparison:** ESP32-S3-DevKitC
-**Living** document: updated every week; handed in at the workshop (week 8) and
-at the close (week 16).
+**Living** document: updated every week; handed in at the workshop (week 7, tag
+`workshop`) and at the close (week 14). The course went from 16 to 14 weeks on
+2026-10-21.
 House rule: *"show me the trace"* — every timing claim cites a measurement.
 
 ## 1. The system and its task set
@@ -15,33 +16,45 @@ system shall <response> within <deadline>*) — then the task that implements th
 | ID | Requirement | Type | Where the number comes from |
 |---|---|---|---|
 | REQ-CTRL-01 | While the system is irrigating, the control loop shall recompute the valve command every 10 ms, with a deadline equal to its period. | Hard | Given by the scenario (task table). |
-| REQ-CTRL-02 | When line pressure exceeds 3000 mV, the system shall drive the valve command to zero within 5 ms of the sample that detected it. | Hard | Given by the scenario (`response < 5 ms`); the threshold is `ESTOP_MV` in `main.c`. |
+| REQ-CTRL-02 | When line pressure exceeds 3000 mV, the system shall drive the valve command to zero within 5 ms of the sample that detected it. | Hard | Given by the scenario (`response < 5 ms`); the threshold is `ESTOP_MV` in `main.c`. Week 6 calls it REQ-ESTOP-01. |
 | REQ-CTRL-03 | While the system is irrigating, the system shall sample pressure every 1 ms with an absolute period error no greater than 100 µs. | Hard | The 1 kHz period is given by the scenario. The 100 µs bound is our budget, 10 % of the period, so the PI loop can treat the sampling instant as uniform. |
 | REQ-CTRL-04 | While the system is irrigating, the system shall service each 1 kHz sampling tick before the next one arrives, so that no more than 1 tick is ever pending. | Hard | Derived from REQ-CTRL-03. The firmware's own `backlog_peak` counter is the verification instrument. |
 | REQ-CTRL-05 | When a flow sensor pulse arrives on the flow input, the system shall count it without loss for input rates up to 500 Hz. | Hard | YF-S401 at its rated maximum flow (5880 pulses/L, `main.c`), rounded up. |
 | REQ-CTRL-06 | While the link to the Hub is up, the system shall emit one telemetry frame every 1000 ms, tolerating a delay of up to 100 ms. | Soft | Period given by the scenario. Late frames degrade the dashboard, they do not break the plant. |
 | REQ-CTRL-07 | When an operator command arrives on the console, the system shall complete the response within 200 ms. | Firm | A late console answer is worthless but harmless. 200 ms is the human perception limit we adopt. |
 | REQ-CTRL-08 | While a maintenance command is executing, the system shall continue to meet REQ-CTRL-03 and REQ-CTRL-04. | Hard | Our own requirement. Week 2's Task C exists to test exactly this one, and the superloop is expected to fail it. |
+| REQ-CONS-01 | When an operator issues `calib`, the system shall complete it within 1 s, running at the console's (lowest) priority. | Firm | Given by week 6: `calib` needed about 400 ms of CPU against a 1 s deadline. It refines REQ-CTRL-07 for the one command that cannot answer in 200 ms. |
 
 ### Measured task set
 
-`C_i` is the instrumentation pulse width on the analyzer, mean over a 49.999 s
-capture at 4 MHz (250 ns resolution). Verdicts are justified in §3.
+The node as it runs now: ESP32-C6, `firmware/kernel` with ADR-002 and ADR-005
+(build `build-lab06-adr005-10k`). Unless the instrument column says otherwise,
+`C_i` is the instrumentation pulse width on the analyzer over a 50 s capture at
+4 MHz, 250 ns resolution
+(`evidencia/lab06/taskC-after-estop-30s-4MHz.vcd`, reduced by
+[`vcd_taskset.py`](evidencia/lab06/vcd_taskset.py) into
+`taskset-final-stats.txt`). The RTA takes the maximum and adds the kernel's
+cost per job (`ovh`): two context switches of 14.50 µs (week 4, Task C), or for
+sampling the 19 µs from the tick ISR to the thread (`lat_peak_us`) plus one
+switch. The same numbers feed [`analysis/taskset.csv`](analysis/taskset.csv).
+The week-2 superloop baseline on the L476 is in §3, week 2.
 
-| Task | Req. | Type | Period T | Deadline | **Measured C_i** (min / mean / max) | U = C/T | Verdict |
-|---|---|---|---|---|---|---|---|
-| Sensor sampling (`task_sampling`, D3/PB3) | REQ-CTRL-03, 04 | Hard | 1 ms | = T | 4.50 / **4.95** / 5.50 µs | 0.495 % | **fails**, see §3 rows 1–2 |
-| Control loop (`task_control`, D4/PB5) | REQ-CTRL-01 | Hard | 10 ms | = T | 1.25 / **1.35** / 1.50 µs | 0.014 % | **fails**: 1.00 % of periods without the flow sensor, 15.1 % with it |
-| Emergency stop (path sampling → control) | REQ-CTRL-02 | Hard | sporadic | 5 ms | bounded by the control period | — | **fails**, worst case 14.77 ms |
-| Telemetry (`task_telemetry`, D6/PB10) | REQ-CTRL-06 | Soft | 1000 ms | 1100 ms | 5978.00 / **5980.36** / 5982.50 µs | 0.598 % | **passes**, period 998.74–999.28 ms |
-| Command console (`task_console`, D5/PB4) | REQ-CTRL-07, 08 | Firm | sporadic | 200 ms | not exercised in the baseline capture | — | `calib` **fails** REQ-CTRL-08, §3 row 6b |
-| Flow pulse count (`flow_isr` + `task_flow_batch`, D7/PA8) | REQ-CTRL-05 | Hard | sporadic, batched /100 (2 s at 50 Hz) | best effort | 70.50 / **70.62** / 70.75 µs | 0.004 % | **passes**, 100.1 pulses per batch, no loss |
-| Flow pulse **interrupt** (`flow_isr`, no GPIO of its own) | REQ-CTRL-05 | Hard | sporadic | — | **11.50 µs** (inferred, see §3) | — | it alone breaks REQ-CTRL-01, see §3 |
+| Task | Req. | Type | Prio | Period T | Deadline | **Measured C_i** (min / mean / max) | Instrument | C_i + ovh | U | Verdict (§3, §4) |
+|---|---|---|---:|---|---|---|---|---:|---:|---|
+| Sampling (`task_sampling`, D0/GPIO3) | REQ-CTRL-03, 04 | Hard | 2 | 1 ms | 1 ms | 3.00 / 3.14 / **3.25 µs** | analyzer, 49,993 pulses | 36.75 µs | 3.675 % | **passes**, R ≤ 36.75 µs |
+| Control (`task_control`, D1/GPIO4) | REQ-CTRL-01 | Hard | 3 | 10 ms | 10 ms | 1.75 / 2.13 / **2.25 µs** | analyzer, 4,999 pulses | 31.25 µs | 0.313 % | **passes**, R ≤ 1.30 ms with B |
+| E-stop path (inside sampling) | REQ-CTRL-02 | Hard | 2 | sporadic | 5 ms | detection to valve closed **1.00 µs** (10.005 ms before ADR-005) | analyzer, 5 trips | n/a | n/a | **passes** since ADR-005 |
+| Flow batch (`task_flow_batch`, D4/GPIO7) | REQ-CTRL-05 | Hard | 5 | ≥ 200 ms (100 pulses at 500 Hz) | = T | 77.50 / 77.57 / **77.75 µs** | analyzer, week 4 (flow input unplugged in week 6) | 106.75 µs | 0.053 % | **passes** |
+| Display (`task_display`, D5/GPIO10) | none | Soft | 7 | 50 ms | 50 ms | no pulse in 50 s: no HMI on the C6 | analyzer | 29.00 µs | 0.058 % | **passes** |
+| Telemetry (`task_telemetry`, D3/GPIO6) | REQ-CTRL-06 | Soft | 8 | 1000 ms | 1100 ms | 99.25 / 103.71 / **113.50 µs** | analyzer, 50 pulses | 142.50 µs | 0.014 % | **passes** |
+| Console running `calib` (D2/GPIO5) | REQ-CONS-01, CTRL-07, 08 | Firm | 9 | sporadic (1 s) | 1 s | CPU **10.584 ms**, plus 489.4 ms asleep: duration 500.17 ms | CPU: kernel runtime counters; duration: analyzer | 10.613 ms | 1.061 % | **passes** since ADR-005 |
+| Flow pulse **interrupt** (`flow_isr`, no GPIO of its own) | REQ-CTRL-05 | Hard | ISR | ≥ 2 ms (500 Hz) | none | not measured on the C6 (11.50 µs inferred on the L476) | n/a | n/a | n/a | open: flow unplugged in week 6 |
 
-**Total measured utilisation U = 1.169 %** (1.106 % without the flow sensor
-connected). The CPU is idle 98.83 % of the time and the hard deadlines are
-missed anyway. That single sentence is the case for module 2, and §3 is where it
-is earned.
+**Total U = 5.174 %**, of which the task bodies are 1.46 % and the rest is the
+kernel's per-job cost. Liu & Layland and the hyperbolic test pass with room, and
+the RTA with blocking puts every task under its deadline (§4). Two requirements
+failed with U at 5 %, whatever the tests said: the e-stop path and `calib`.
+Week 6 fixed both at the source (ADR-005).
 
 ## 2. ADRs
 
@@ -84,19 +97,139 @@ attribute. The flow batch now starts 35 µs after its 100th pulse instead of
 not one of ours: **`idle` at 228 of 256 B (89 %)**, a size inherited from the
 course `prj.conf`. Shared state (`pressure_mv`, `estop`, `setpoint_mv`) is now
 written and read by different threads without protection, which week 7 has to
-settle. And the analyzer alone no longer explains who preempted whom, which is
+settle. (Week 6: settled for the PI state by ADR-002.) And the analyzer alone no longer explains who preempted whom, which is
 why week 5 adds tracing.
 
 **What it does not fix.** REQ-CTRL-02 (e-stop within 5 ms) still fails: the
 sample that detects overpressure only sets `estop`, and the valve waits for the
 next control run, up to 10.011 ms later. The kernel removed the 411 ms block,
-not that design choice; it is open for module 3.
+not that design choice; it is open for module 3. (Week 6: closed by ADR-005.)
 
 **Alternatives rejected.** A faster MCU: week 2 measured U = 1.1 %, so cycles are
 not what is missing. Cutting `calib` into cooperative steps inside the loop
 fixes that one command and leaves the next blocking call to break the same
 requirements. Relying on the C6's UART FIFO fixed a property of one driver, not
 the architecture.
+
+### ADR-002: Node mutual-exclusion policy, a priority-inheritance mutex
+
+**Status:** accepted (week 6, 2026-10-21), on the three lock regimes measured in
+§3 week 6 on the ESP32-C6.
+
+**Context.** ADR-001 left shared state written and read by different threads
+without protection. The first shared object to get a lock is control's PI state
+(`setpoint_mv`, `integral_mv`): control (priority 3) updates it every 10 ms and
+the console (priority 9) rewrites it on `set` and `clear`. A lock shared across
+priorities can be held by the low thread when the high one asks for it, and then
+every thread in between (flow batch 5, display 7, telemetry 8) runs before the
+holder can release it: a priority inversion with no bound.
+
+**Decision.** The PI state is guarded by one `k_mutex` (`pi_lock()` and
+`pi_unlock()` in `firmware/kernel/src/main.c`). Zephyr's `k_mutex` inherits
+priority: while control waits, the console that holds the mutex runs at
+control's priority. Never a bare `k_sem` across priorities. Sections stay
+short: control holds the lock for its whole body (2.25 µs), the console for one
+assignment in `set` and `clear`. The 1.195 ms section of the lab command
+`invert` stands for the slowest command anyone could add later, and is the B
+the analysis carries.
+
+**Justification (with numbers).** The same forced sequence each time: the
+console takes the lock just before a control release, control asks for it, and
+telemetry wakes with 20 ms of busy work (`invert`, 4 complete rounds per
+capture):
+
+| PI lock | Control's worst R | Console's hold of the lock | Control misses |
+|---|---:|---:|---:|
+| uncontended | 20.0 µs | n/a | 0 |
+| `k_sem` of 1 | **20.43 ms** | 21.23 ms: 1.22 ms its own, 20.00 ms of telemetry inside | 5 in 5 rounds |
+| `k_mutex` | **0.41 ms** | **B = 1.195 ms** | 0 |
+
+With the semaphore, control waits for telemetry, a thread that never touches
+the lock, and misses REQ-CTRL-01 (D = 10 ms) twice over. With the mutex the
+console ends its section at priority 3, control is done 19 µs after the
+release, and telemetry's 20 ms come after control. The RTA bound for control with
+B = 1.195 ms is 1.30 ms (§4); the worst measured, 0.41 ms, is under it.
+
+**Cost, acknowledged.** Uncontended, control's pulse grew from 0.85 µs (week 4,
+no lock) to 2.15 µs mean (the mutex plus the `ctrl_waiting` flag the lab
+added). With inheritance, the threads between control and the console (flow
+batch, display, telemetry) can also wait up to B while the console runs at
+priority 3, although none of them uses the lock: push-through blocking, which
+the RTA charges them too (§4). And B becomes a design budget: whoever writes a
+console command that holds the lock adds its section directly to control's
+worst case.
+
+**Alternatives rejected.** A `k_sem` as the lock: measured above. Locking the
+scheduler or the interrupts around the update (`k_sched_lock`, `irq_lock`):
+it would also hold back sampling, which never touches the PI state. Priority
+ceiling (Buttazzo §7.7) bounds B the same way and also prevents chained
+blocking, but Zephyr's `k_mutex` only inherits, and with a single lock there is
+no chain to prevent.
+
+### ADR-005: E-stop and `calib` fixed at the source
+
+**Status:** accepted (week 6, 2026-10-21), measured before and after on the
+ESP32-C6 (§3 week 6). In the firmware: `CONFIG_LAB_ADR005`
+(`firmware/kernel/adr005.conf`) plus `CONFIG_SYS_CLOCK_TICKS_PER_SEC=10000`,
+built as `build-lab06-adr005-10k`.
+
+**Context.** Two requirements failed whatever the utilisation said (U = 5 %).
+
+- **REQ-CTRL-02** (week 6's REQ-ESTOP-01): sampling detects the overpressure but
+  only sets `estop`. The valve closes when control's next run sets the duty to 0
+  and the PWM step after it writes the pin. Summed from the periods, the path
+  from the threshold crossing is at most 1 + 10 + 1 = **12 ms**: one sampling
+  period to see it, one control period for control to act, one more sampling
+  period for the PWM step. Measured from the detecting sample, the worst of 5
+  trips was **10.005 ms**, against 5 ms.
+- **REQ-CONS-01**: `calib` spins 1000 × 400 µs in `k_busy_wait`, so its CPU is
+  its duration: **396.0 ms of CPU in 403.5 ms**. At the lowest priority it only
+  gets what the tasks above leave. It fits today, but roughly only while
+  396 ms ≤ (1 − U_above) × 1 s, that is while the load above the console stays
+  under U ≈ 0.60. Daniela's two sensors are exactly that kind of load.
+
+**Decision.**
+
+1. In `task_sampling`, the branch that sets `estop` also sets `duty_pct = 0`, so
+   the PWM step a few lines below drives the valve low in the same job.
+2. In `cmd_calib`, `k_busy_wait(400)` becomes `k_usleep(400)`: the console waits
+   for the sensor instead of spinning.
+3. The kernel tick goes from the C6's default 1 kHz to 10 kHz. Measured: at
+   1 kHz each `k_usleep(400)` lasts 2 ms (it rounds up to whole ticks and adds
+   one), so `calib` takes **2000.3 ms** and misses REQ-CONS-01 on duration
+   alone. At 10 kHz each lasts 0.5 ms. The kernel is tickless, so the finer
+   tick adds no timer interrupts; it only makes timeouts finer.
+
+**Justification (with numbers).**
+
+| | Before | After |
+|---|---:|---:|
+| E-stop, detection to valve closed, worst of 5 trips | 10.005 ms | **1.00 µs** (same sampling job) |
+| `calib` CPU / duration | 396.0 / 403.5 ms | **10.58 / 500.2 ms** |
+| `calib` with the fix but the C6's 1 kHz tick | | 13.4 / 2000.3 ms: misses 1 s |
+| Load above the console that still lets `calib` meet 1 s (rough) | U ≤ 0.60 | U ≤ 0.98 |
+
+Through `calib`, sampling and control keep their periods in every build
+(sampling 994 to 1006 µs, control 9.998 to 10.004 ms). From the threshold
+crossing, the e-stop path is now at most one sampling period plus sampling's
+own response time: 1 ms + 36.75 µs (§4).
+
+**Cost, acknowledged.** Sampling now writes `duty_pct`, which control also
+writes, outside the PI lock. If control is preempted between reading `estop`
+and writing the duty, it can overwrite the 0 with a PI value and the valve
+reopens until control's next run, up to 10 ms later. The window is a few µs
+every 10 ms and did not show in the 5 trips after the fix; making the PWM step
+also check `estop` would close it and is the next change. Each settle of
+`calib` costs 10.6 µs of CPU (the read, the sleep, two switches) instead of
+400 µs. And the 10 kHz tick changes every other sleep in the node: the
+console's `k_msleep(5)` should now wake every 5.1 ms (50 ticks plus one)
+instead of the 6 ms the week 5 trace shows, more wake-ups for the same work.
+
+**Alternatives rejected.** For the e-stop, running control faster or adding an
+e-stop thread both keep a hand-off on the path; the job that sees the
+overpressure is the one that can act on it. For `calib`, cutting rounds or the
+settle time changes the sensor procedure, which is not ours to change; keeping
+the 1 kHz tick and sleeping 2 ms per settle breaks the deadline, as measured.
 
 ## 3. Evidence by week
 
@@ -766,16 +899,240 @@ the display has no HMI on this board yet, so we leave them until it does.
 
 Full output: `evidencia/lab04/console-session.txt`.
 
+### Week 5: tracing (ESP32-C6)
+
+Status: **partial, by decision of the course.** On 2026-10-21 the professor
+turned week 5 into a demo halfway through the session and moved on to week 6.
+Tasks A and B had been done on the C6 by then; Task C (the tracing overhead on
+sampling jitter, GPIO with tracing on and off) was not. Files in
+[`evidencia/lab05/`](evidencia/lab05/).
+
+- **Task A.** CTF streamed out of the CH343 UART jack at 4 Mbaud with the
+  course's `trace.conf` and `uart_trace.overlay`, unchanged on the C6 (same
+  `usb_serial` and `uart0` labels); the console moves to the USB jack. Threads
+  named in the viewer: `taskA-viewer-threads.png`.
+- **Task B.** Our [`trace_stats.py`](evidencia/lab05/trace_stats.py) reduces a
+  trace (it resynchronises after the bytes usbipd loses at 4 Mbaud, about one
+  loss every 3 s) and [`trace_figure.py`](evidencia/lab05/trace_figure.py) draws
+  the chain inside `calib`: tick ISR, sampling readied, console preempted,
+  sampling runs and pends, console resumes.
+
+![Preemption inside calib](evidencia/lab05/fig-trace-preemption.svg)
+
+| From the trace, 3.1 s at idle (`trace-idle/stats.txt`) | Trace | GPIO or firmware |
+|---|---:|---:|
+| Context switch, sampling to control | 13.62 to 14.81 µs, median 14.50 µs | 14.50 µs (week 4, Task C) |
+| Tick ISR entry to sampling switched in | median 48.0 µs, max 90.0 µs | `lat_peak_us` 16 µs |
+| CPU: idle / sampling / tracer and link losses | 14.4 % / 7.4 % / 76.6 % | idle 97 % (week 4 thread analyzer) |
+
+The switch agrees with the analyzer; the latency does not, and the difference
+is the tracer itself: on the C6 each event costs about 7 µs with interrupts
+blocked (2.5 µs on the S3), and the tracing thread is invisible in its own
+trace, which is why its CPU appears as the time without a lane. Numbers for the
+RET come from the analyzer; the trace tells who and why. Only the first 75.8 ms
+of `calib` survive in the trace: the 32 KB buffer fills while the console spins
+and the tracer below it cannot drain (423 ms without events,
+`trace-calib/stats.txt`).
+
+**The week-4 open question, answered.** The 506 late releases, all on odd
+ticks, are the console: `k_msleep(5)` at a 1 kHz tick sleeps 6 ticks, so it is
+readied in the same tick ISR as sampling every 6 ms (515 times in 3.1 s), and an
+even period always lands on the same parity. Display (51 ms) alternates parity
+and telemetry (1 s) only adds a few.
+
+### Week 6: schedulability, priority inversion and ADR-005 (ESP32-C6)
+
+Status: **complete** except the homework on Daniela's load, which waits for her
+two tasks' parameters (§4). Measured on 2026-10-21 on the ESP32-C6, 4 MHz, VCD,
+with the console driven by
+[`evidencia/lab06/capture_lab06.py`](evidencia/lab06/capture_lab06.py) (banner
+first, commands at fixed offsets, PulseView armed on a trigger before the
+commands go out). One wiring for the whole session: D0 to D5 on GPIO3, 4, 5, 6,
+7, 10 as in week 4, D6 on GPIO18 (`instr_lock`, new), D7 on GPIO2 (the valve),
+flow input unplugged. Files in [`evidencia/lab06/`](evidencia/lab06/).
+
+| Measurement (C6) | Value | Reference |
+|---|---|---|
+| Fig. 4.13 under RM: who misses, when? | τ2, first at t = 7 ms, then **4 per 35 ms** hyperperiod (6860 of 8575 jobs in 60 s) | book: τ2 at t = 7 ms, 1 per hyperperiod |
+| Fig. 4.13 under EDF: misses in 60 s | **0** of 8575 | book: none, U ≈ 0.97 ≤ 1 |
+| Control's max R, no lock contention | **20.0 µs** from the sampling rise (48 µs from the tick, firmware) | RTA without B: 68.0 µs |
+| Control's max R during the inversion (`k_sem` as lock) | **20.43 ms** | no bound: that is what is broken |
+| Control's max R with a `k_mutex` | **0.41 ms** | RTA, C + B + interference: 1.30 ms |
+| B: the console's longest critical section | **1.195 ms** | its GPIO pulse |
+| `calib` CPU / duration, before the fix | 396.0 / 403.5 ms | it spins: CPU ≈ duration |
+| `calib` CPU / duration, after the fix | **10.58 / 500.2 ms** (13.4 / 2000.3 ms at the C6's 1 kHz tick) | |
+| E-stop, detection to valve low, max of 5 trips, before / after | 10.005 ms / **1.00 µs** | sums: 12 ms / 1 ms + 36.75 µs |
+
+| Capture (4 MHz) | Firmware | Console log | Reduced by |
+|---|---|---|---|
+| `taskA-rm-2s-4MHz.vcd`, `taskA-edf-2s-4MHz.vcd` | `firmware/fig413`, RM and `edf.conf` | `taskA-rm-console.txt`, `taskA-edf-console.txt` (60 s runs) | `vcd_fig413.py`, `fig413_sim.py` |
+| `taskB-nolock-7s-4MHz.vcd` | kernel, before ADR-005 | `taskB-nolock-console.txt` | `vcd_lock.py` |
+| `taskB-sem-5s-4MHz.vcd`, `taskB-mutex-5s-4MHz.vcd` | same, `lock sem` / `lock mutex`, `invert` | `taskB-sem-console.txt`, `taskB-mutex-console.txt` | `vcd_lock.py` |
+| `taskC-before-estop-30s-4MHz.vcd`, `taskC-before-calib-5s-4MHz.vcd` | kernel, before ADR-005 | `taskC-before-*-console.txt` | `vcd_taskc.py` |
+| `taskC-after1k-calib-5s-4MHz.vcd` | ADR-005, 1 kHz tick | `taskC-after1k-calib-console.txt` | `vcd_taskc.py` |
+| `taskC-after-estop-30s-4MHz.vcd`, `taskC-after-calib-5s-4MHz.vcd` | ADR-005, 10 kHz tick (final) | `taskC-after-*-console.txt` | `vcd_taskc.py`, `vcd_taskset.py` |
+
+#### Task A: Fig. 4.13, live
+
+![Fig. 4.13 under RM](evidencia/lab06/fig-taskA-rm.svg)
+
+![Fig. 4.13 under EDF](evidencia/lab06/fig-taskA-edf.svg)
+
+[`firmware/fig413/`](firmware/fig413/) runs τ1 (C = 2 ms, T = 5 ms) and τ2
+(C = 4 ms, T = 7 ms) from a synchronous release, one GPIO per task high from
+start to end and one per deadline high from a miss to the late job's end. The
+computation is a loop calibrated at boot, not `k_busy_wait()`: the loop counts
+work, so a preempted job resumes where it stopped, while `k_busy_wait()` counts
+wall time and would end a preempted job early. A late job keeps running and the
+releases stay on the absolute grid.
+
+**RM misses four times per hyperperiod, not once, and the simulator says why.**
+In the book two of τ2's five jobs per 35 ms end with exactly zero slack
+(t = 14 and t = 28 ms). On the board every τ1 job costs 2.027 ms from release
+to end (the 27 µs are the kernel's wake-up path), which turns both into misses
+and drags one more behind them. Per job, the board and
+[`fig413_sim.py`](evidencia/lab06/fig413_sim.py) fed with C1 = 2.027 ms agree
+within 20 µs:
+
+| τ2 job released at (ms into the hyperperiod) | 0 | 7 | 14 | 21 | 28 |
+|---|---:|---:|---:|---:|---:|
+| Finish minus deadline, C6 (RM) | +1.054 | +0.088 | +1.145 | +0.179 | −0.794 ms |
+| Same, simulator with C1 = 2.027 ms | +1.054 | +0.081 | +1.135 | +0.162 | −0.811 ms |
+| Finish minus deadline, C6 (EDF) | −0.977 | −1.937 | −0.874 | −1.834 | −2.795 ms |
+
+60 s on the console: 6860 misses on the board, 6857 in the simulator, 1715 in
+the book. Under EDF there is one preemption per hyperperiod (six under RM), and
+one detail of Zephyr shows: at t = 30 ms both jobs are due at 35 and the kernel
+does not preempt on a tie, so τ2 keeps the CPU. With that rule the simulator
+matches the EDF run within 45 µs. Two traps found on the way: `k_sleep()` to an
+absolute time already past still waits for the next tick, so a late job that
+sleeps anyway leaves up to 1 ms idle and makes the next one late too (717 of
+717 missed before the check); and the analyzer's clock runs 140 ppm off the
+board's, so the release grid is fitted on the data, not assumed to be 7 ms.
+
+#### Task B: the inversion, then the fix
+
+![No contention](evidencia/lab06/fig-taskB-nolock.svg)
+
+![Inversion with a k_sem](evidencia/lab06/fig-taskB-sem.svg)
+
+![PI k_mutex](evidencia/lab06/fig-taskB-mutex.svg)
+
+`lock sem|mutex` picks the lock around control's PI state at run time, so the
+three regimes run on one build. `invert` forces the classic sequence: the
+console (priority 9) takes the lock 9.2 ms after control's last release, so the
+next release lands inside the section; control (3) asks for it and blocks; the
+console then wakes telemetry (8) with 20 ms of busy work, the phasing that in
+the field only happens by chance. `instr_lock` (D6) is high while the console
+holds the lock, and `instr_ctrl` rises before control asks for it, so the wait
+shows inside control's pulse. Per round, t = 0 when the console takes the lock
+(`taskB-*-stats.txt`):
+
+| Lock | Control asks | Telemetry runs | Lock released | Control ends | Control R |
+|---|---:|---:|---:|---:|---:|
+| `k_sem` | 0.83 ms | 0.85 to 20.86 ms, inside the section | 21.20 to 21.23 ms | +14 µs | **20.40 to 20.43 ms** |
+| `k_mutex` | 0.83 ms | 1.23 to 21.24 ms, after control | 1.194 to 1.196 ms | +19 µs | **0.404 to 0.405 ms** |
+
+Uncontended, control ends at most 20.0 µs after the sampling job that released
+it (1250 jobs). The firmware's own counter reads 48 µs because it starts at
+the tick ISR, which has no pin.
+
+#### Task C: the e-stop and `calib`, fixed at the source
+
+![E-stop before](evidencia/lab06/fig-taskC-before-estop.svg)
+
+![E-stop after](evidencia/lab06/fig-taskC-after-estop.svg)
+
+`instr_flow` (D4) now marks the detection (the flow input is unplugged so the
+batch never drives it), D7 watches the valve, and the capture script trips the
+e-stop five times (`set 3300` until `estop=1`, then `set 1500` and `clear`).
+Before ADR-005 the path from detection to valve closed took 2.0 ms twice and
+10.0 ms three times: it depends only on where the detection falls in control's
+10 ms period, plus the 1 ms to the next PWM step. After, the valve falls 0.5 to
+1.0 µs after the detection pin, in the same job, before control has run.
+
+| `calib` | Duration (analyzer, console pulse) | CPU (kernel runtime counters) | Sampling period during it |
+|---|---:|---:|---:|
+| before: `k_busy_wait(400)` | 403.46 ms | 396.0 ms | 997 to 1003 µs |
+| `k_usleep(400)`, 1 kHz tick | 2000.29 ms | 13.4 ms | 994 to 1006 µs |
+| `k_usleep(400)`, 10 kHz tick | **500.17 ms** | **10.58 ms** | 997 to 1003 µs |
+
+The CPU column comes from `k_thread_runtime_stats_get()` on the console thread
+around the loop (`taskC-calib-cpu.txt`, three runs per build, within 0.2 ms of
+each other). The counters have been on since week 4, because
+`CONFIG_THREAD_ANALYZER` selects them. Before, 98.2 % of the duration is CPU;
+the remaining 7 ms are the threads above preempting it.
+
 ## 4. Schedulability analysis
 
-Measured `C_i` from §1. With U = 1.106 % the utilisation-bound tests (RM,
-hyperbolic, EDF) all pass trivially, which is precisely why they are not the
-whole story here: the task set is schedulable on paper and misses deadlines in
-practice, because a superloop provides no preemption and the blocking term is
-the full length of the longest call in the cycle, not a bounded critical
-section. Formal RTA with the blocking term `B_i` belongs to module 3, and the
-5.98 ms telemetry call and the 416 ms `calib` call are the two `B_i` values it
-will have to carry.
+The node as measured in §1 (ESP32-C6, ADR-002 and ADR-005 in), run through
+[`analysis/rta.py`](analysis/rta.py) on
+[`analysis/taskset.csv`](analysis/taskset.csv). Full output:
+`evidencia/lab06/rta-output.txt`. A parameter is changed with
+`--set task.field=value` and a task added with `--add`, so a change in the
+workshop is a re-run, not a rewrite.
+
+**Utilisation.** U = 5.174 %: 1.46 % task bodies, the rest the kernel's cost per
+job. Liu & Layland for n = 6 asks U ≤ 0.7348: **pass**. Hyperbolic,
+∏(Uᵢ + 1) = 1.052 ≤ 2: **pass**. EDF would pass too. As in week 2, when the
+superloop passed the same tests at U = 1.1 % and still missed deadlines, the
+tests are not the whole story: the e-stop path and `calib` failed at U = 5 %
+until ADR-005, because neither failure was about load.
+
+**Blocking.** One PI lock, used by control (2.25 µs sections) and the console
+(B = 1.195 ms, Task B). Its ceiling is control's priority 3. Control can wait
+once for the console's section (direct blocking); flow batch, display and
+telemetry can wait once too, because the console runs at priority 3 while it
+holds the lock (push-through blocking). Sampling, above the ceiling, never
+waits.
+
+**RTA**, `R_i = S_i + C_i + B_i + Σ ⌈R_i / T_h⌉ C_h`, iterated to a fixed point
+(times in µs):
+
+| Task | C_i | B_i | S_i | **R_i** | D_i | |
+|---|---:|---:|---:|---:|---:|---|
+| sampling | 36.75 | 0 | 0 | **36.75** | 1000 | R ≤ D |
+| control | 31.25 | 1195.00 | 0 | **1299.75** | 10000 | R ≤ D |
+| flow_batch | 106.75 | 1195.00 | 0 | **1406.50** | 200000 | R ≤ D |
+| display | 29.00 | 1195.00 | 0 | **1435.50** | 50000 | R ≤ D |
+| telemetry | 142.50 | 1195.00 | 0 | **1578.00** | 1100000 | R ≤ D |
+| console (`calib`) | 10613.00 | 0 | 489400 | **521634.50** | 1000000 | R ≤ D |
+
+S_i is time asleep inside the job (`calib`'s settles), counted whole: simple
+and pessimistic.
+
+**Against the measurement** (week 6 rows 3 to 5):
+
+| Control | Measured | RTA |
+|---|---:|---:|
+| no contention | 20.0 µs (analyzer, from the sampling rise); 48 µs (firmware, from the tick) | 68.0 µs (`--no-blocking`) |
+| PI `k_mutex` | 0.41 ms | 1.30 ms |
+| `k_sem` | 20.43 ms | none: without inheritance B is not bounded by any section |
+
+Both measurements sit under their bound, and a capture will normally land below
+it, for three reasons. The RTA assumes the worst phasing at once (every higher
+task released together, and control asking for the lock the instant the
+console takes it), while in the capture control arrived 0.83 ms into the
+1.195 ms section and waited only the remaining 0.37 ms. It charges every job
+two full context switches, the worst seen. And a capture of a few seconds
+samples a handful of phasings, while the analysis covers all of them.
+
+**`calib` fit (REQ-CONS-01).** Before ADR-005 the RTA gives 413.3 ms with
+today's load (`--set console.C_us=396048 --set console.S_us=0`), after it
+521.6 ms: both fit 1 s now. The difference appears with load above the console:
+roughly, `calib` fits while C / (1 − U_above) + S ≤ 1 s, so up to U_above ≈ 0.60
+before and ≈ 0.98 after. With Daniela's tasks: `____` (below).
+
+**E-stop path (REQ-CTRL-02).** Before: crossing to detection ≤ 1 ms (sampling
+period), detection to control ≤ 10 ms (control period), control to the PWM step
+≤ 1 ms: **12 ms**, of which the measurable part from the detection is 11 ms;
+measured 10.005 ms. After: crossing to detection ≤ 1 ms, detection to valve in
+the same job ≤ R_sampling = 36.75 µs: **1.04 ms**; measured 1.00 µs from the
+detection.
+
+**Daniela's two sensors.** `____`: her tasks' parameters are given in class.
+To run: `python3 analysis/rta.py --add <name>,<prio>,<C_us>,<ovh_us>,<T_us>` for
+each, then U, both tests and the RTA verdict go here.
 
 ## 5. Functional safety (final project)
 

@@ -15,6 +15,13 @@
  *
  * The task bodies and the instrumentation GPIOs are the week-3 ones, unchanged,
  * so the A/B against the superloop compares architectures and nothing else.
+ *
+ * Week 6 adds, without changing the plan above:
+ *   Task B  control's PI state behind one lock shared with the console;
+ *           `lock sem|mutex` picks its kind, `invert` forces the inversion,
+ *           instr_lock (GPIO18) is high while the console holds it
+ *   Task C  instr_flow marks the e-stop detection; CONFIG_LAB_ADR005
+ *           (adr005.conf) is the "after" build of ADR-005
  */
 
 #include <zephyr/kernel.h>
@@ -45,6 +52,9 @@
 #define CALIB_ROUNDS     1000  /* `calib` command: rounds of read + settle */
 #define DISPLAY_MS       500   /* HMI refresh period */
 #define ESTOP_HOLD       50    /* joystick-down samples (at 50 Hz) = 1 s hold */
+#define INV_ROUNDS       5     /* `invert`: inversions forced per command */
+#define INV_CS_US        1000  /* `invert`: the console's critical section, B */
+#define INV_MEDIUM_US    20000 /* `invert`: telemetry's busy work, woken inside it */
 
 /* Thread plan, rate-monotonic: the shorter the period, the higher the priority.
  * main keeps the default priority 0, above all of them, so init_hw() finishes
@@ -75,6 +85,7 @@ static const struct gpio_dt_spec instr_cons = INSTR(instr_cons);
 static const struct gpio_dt_spec instr_tele = INSTR(instr_tele);
 static const struct gpio_dt_spec instr_flow = INSTR(instr_flow);
 static const struct gpio_dt_spec instr_disp = INSTR(instr_disp);
+static const struct gpio_dt_spec instr_lock = INSTR(instr_lock);
 static const struct gpio_dt_spec valve_led =
 	GPIO_DT_SPEC_GET_OR(DT_ALIAS(led0), gpios, {0});
 static const struct gpio_dt_spec flow_pulse =
@@ -127,6 +138,44 @@ static atomic_t backlog_peak;   /* worst tick_q occupancy, saturates at 8 */
 static atomic_t lat_peak_us;    /* worst release -> sampling thread start */
 static atomic_t ticks_dropped;  /* releases rejected by the full queue */
 static atomic_t ctrl_missed;    /* control releases that found the last one pending */
+
+/* Week 6 Task B: control's PI state (setpoint, integral) is shared with the
+ * console, so both take one lock around it. `lock sem|mutex` picks its kind at
+ * run time, and the three regimes of Task B run on one build:
+ *   mutex  k_mutex, the holder inherits the waiter's priority (default, ADR-002)
+ *   sem    k_sem of 1, no inheritance: the priority inversion
+ * A take returns the kind it used, so a switch never unlocks the wrong one. */
+enum lock_kind { LOCK_MUTEX, LOCK_SEM };
+static enum lock_kind lock_kind = LOCK_MUTEX;
+K_MUTEX_DEFINE(pi_mutex);
+K_SEM_DEFINE(pi_sem, 1, 1);
+
+static enum lock_kind pi_lock(void)
+{
+	enum lock_kind k = lock_kind;
+
+	if (k == LOCK_SEM) {
+		k_sem_take(&pi_sem, K_FOREVER);
+	} else {
+		k_mutex_lock(&pi_mutex, K_FOREVER);
+	}
+	return k;
+}
+
+static void pi_unlock(enum lock_kind k)
+{
+	if (k == LOCK_SEM) {
+		k_sem_give(&pi_sem);
+	} else {
+		k_mutex_unlock(&pi_mutex);
+	}
+}
+
+static atomic_t ctrl_released;  /* tick time of control's latest release (cycles) */
+static atomic_t ctrl_r_peak_us; /* worst control response, release -> end */
+static atomic_t ctrl_waiting;   /* control is asking for the PI lock */
+static atomic_t cs_peak_us;     /* longest console hold of the PI lock: B */
+static atomic_t medium_kick;    /* `invert` asks telemetry for its busy work */
 
 /* ---- ISR side ------------------------------------------------------------- */
 
@@ -304,10 +353,18 @@ static void task_sampling(void)
 
 	pressure_mv = read_pressure_mv();
 
-	/* e-stop condition is *detected* here, at 1 kHz... */
+	/* e-stop condition is *detected* here, at 1 kHz. As shipped the valve only
+	 * reacts when control runs; with ADR-005 the PWM step below drives it low
+	 * in this same job. */
 	if (pressure_mv > ESTOP_MV) {
-		estop = true; /* ...but the valve only reacts when control runs */
+		estop = true;
+#ifdef CONFIG_LAB_ADR005
+		duty_pct = 0;
+#endif
 	}
+	/* Week 6 Task C: instr_flow marks the detection. The flow input stays
+	 * unplugged, so the batch never drives this pin as well. */
+	instr_set(&instr_flow, estop);
 
 	/* joystick, decimated to 50 Hz */
 	if (++joy_div >= 20) {
@@ -329,6 +386,13 @@ static void task_control(void)
 {
 	instr_set(&instr_ctrl, 1);
 
+	/* Week 6 Task B: the PI state is shared with the console. instr_ctrl rises
+	 * before the lock, so a wait for it shows inside control's pulse. */
+	atomic_set(&ctrl_waiting, 1);
+	enum lock_kind k = pi_lock();
+
+	atomic_set(&ctrl_waiting, 0);
+
 	if (estop) {
 		duty_pct = 0;
 	} else {
@@ -339,6 +403,7 @@ static void task_control(void)
 		duty_pct = CLAMP((error + integral_mv) / 20, 0, 100);
 	}
 
+	pi_unlock(k);
 	instr_set(&instr_ctrl, 0);
 }
 
@@ -377,6 +442,16 @@ static void task_telemetry(void)
 		 (long)atomic_get(&backlog_peak));
 	printk("%s\n", line);
 
+	instr_set(&instr_tele, 0);
+}
+
+/* Week 6 Task B: the medium-priority busy work. `invert` wakes telemetry from
+ * inside the console's critical section, the phasing that in the field only
+ * happens by chance. Telemetry never touches the PI lock. */
+static void task_medium(void)
+{
+	instr_set(&instr_tele, 1);
+	k_busy_wait(INV_MEDIUM_US);
 	instr_set(&instr_tele, 0);
 }
 
@@ -449,38 +524,143 @@ static void task_display(void)
 
 static void cmd_calib(void)
 {
+	uint32_t t0 = k_uptime_get_32();
+#ifdef CONFIG_SCHED_THREAD_USAGE
+	/* Week 6 Task C: the console's own CPU time during calib. Spinning, CPU
+	 * = duration; sleeping, CPU = the reads alone. The counters have been on
+	 * since week 4: CONFIG_THREAD_ANALYZER selects them. */
+	k_thread_runtime_stats_t u0, u1;
+
+	k_thread_runtime_stats_get(k_current_get(), &u0);
+#endif
+
 	printk("calibrating zero-flow offset (%d rounds)...\n", CALIB_ROUNDS);
 	for (int i = 0; i < CALIB_ROUNDS; i++) {
 		(void)read_pressure_mv();
+#ifdef CONFIG_LAB_ADR005
+		/* ADR-005: wait for the sensor instead of spinning. The sleep
+		 * rounds up to the kernel tick: 1 ms on the C6 by default. */
+		k_usleep(400);
+#else
 		k_busy_wait(400); /* sensor settling time between reads */
+#endif
 	}
-	printk("calibration done\n");
+#ifdef CONFIG_SCHED_THREAD_USAGE
+	k_thread_runtime_stats_get(k_current_get(), &u1);
+	printk("calibration done (%u ms, CPU %u us)\n", k_uptime_get_32() - t0,
+	       (unsigned int)k_cyc_to_us_floor64(u1.execution_cycles -
+						 u0.execution_cycles));
+#else
+	printk("calibration done (%u ms)\n", k_uptime_get_32() - t0);
+#endif
+}
+
+extern const k_tid_t telemetry_tid;
+
+/* Week 6 Task B: the classic sequence, INV_ROUNDS times. The console (low)
+ * takes the PI lock just before a control release, control (high) asks for it
+ * and waits, and the console then wakes telemetry (medium). With a k_sem
+ * telemetry preempts the console and control waits for both; with a k_mutex
+ * the console runs at control's priority until it unlocks. */
+static void cmd_invert(void)
+{
+	const uint32_t cyc_per_us = sys_clock_hw_cycles_per_sec() / 1000000;
+	atomic_val_t missed0 = atomic_get(&ctrl_missed);
+	int done = 0;
+
+	atomic_set(&ctrl_r_peak_us, 0);
+	atomic_set(&cs_peak_us, 0);
+
+	for (int tries = 0; done < INV_ROUNDS && tries < 10 * INV_ROUNDS; tries++) {
+		/* Spin, preemptibly, to 9.2-9.6 ms after control's latest release:
+		 * the next one lands 0.4-0.8 ms into the section. The busy wait is
+		 * for native_sim, whose clock only moves inside one. */
+		for (;;) {
+			uint32_t since = (k_cycle_get_32() -
+					  (uint32_t)atomic_get(&ctrl_released)) / cyc_per_us;
+
+			if (since >= 9200 && since < 9600) {
+				break;
+			}
+			k_busy_wait(10);
+		}
+
+		enum lock_kind k = pi_lock();
+		uint32_t t0 = k_cycle_get_32();
+		bool kicked = false;
+
+		instr_set(&instr_lock, 1);
+		/* The section's work in 10 us slices, so the console notices
+		 * control asking. A slice cut by preemption ends early by at most
+		 * 10 us, so the work stays INV_CS_US whoever runs in between. */
+		for (int i = 0; i < INV_CS_US / 10; i++) {
+			k_busy_wait(10);
+			if (!kicked && atomic_get(&ctrl_waiting)) {
+				kicked = true;
+				atomic_set(&medium_kick, 1);
+				k_wakeup(telemetry_tid);
+			}
+		}
+		instr_set(&instr_lock, 0);
+
+		atomic_val_t cs_us = (k_cycle_get_32() - t0) / cyc_per_us;
+
+		pi_unlock(k);
+
+		atomic_clear(&medium_kick); /* unused if telemetry was printing */
+		if (cs_us > atomic_get(&cs_peak_us)) {
+			atomic_set(&cs_peak_us, cs_us);
+		}
+		if (kicked) {
+			done++; /* the release missed the section otherwise: retry */
+		}
+		k_msleep(100);
+	}
+	printk("invert %s: %d rounds, control R max %ld us, section max %ld us, "
+	       "ctrl_missed +%ld\n", lock_kind == LOCK_SEM ? "sem" : "mutex", done,
+	       (long)atomic_get(&ctrl_r_peak_us), (long)atomic_get(&cs_peak_us),
+	       (long)(atomic_get(&ctrl_missed) - missed0));
 }
 
 static void console_handle(char *line)
 {
 	if (strcmp(line, "help") == 0) {
-		printk("commands: help status joy set <mv> clear calib threads\n");
+		printk("commands: help status joy set <mv> clear calib threads "
+		       "lock sem|mutex invert\n");
 	} else if (strcmp(line, "status") == 0) {
 		printk("p=%d mV sp=%d mV duty=%d%% flow_x100=%d estop=%d "
 		       "batches=%u backlog_peak=%ld lat_peak_us=%ld ticks_dropped=%ld "
-		       "ctrl_missed=%ld\n",
+		       "ctrl_missed=%ld ctrl_r_peak_us=%ld lock=%s\n",
 		       pressure_mv, setpoint_mv, duty_pct,
 		       (int)(flow_lpm * 100.0f), (int)estop, flow_batches,
 		       (long)atomic_get(&backlog_peak),
 		       (long)atomic_get(&lat_peak_us), (long)atomic_get(&ticks_dropped),
-		       (long)atomic_get(&ctrl_missed));
+		       (long)atomic_get(&ctrl_missed),
+		       (long)atomic_get(&ctrl_r_peak_us),
+		       lock_kind == LOCK_SEM ? "sem" : "mutex");
 	} else if (strcmp(line, "joy") == 0) {
 		printk("joystick raw: %d mV\n", joystick_mv);
 	} else if (strncmp(line, "set ", 4) == 0) {
+		enum lock_kind k = pi_lock();
+
 		setpoint_mv = CLAMP(atoi(line + 4), 0, 3300);
+		pi_unlock(k);
 		printk("setpoint = %d mV\n", setpoint_mv);
 	} else if (strcmp(line, "clear") == 0) {
+		enum lock_kind k = pi_lock();
+
 		estop = false;
 		integral_mv = 0;
+		pi_unlock(k);
 		printk("e-stop cleared\n");
 	} else if (strcmp(line, "calib") == 0) {
 		cmd_calib();
+	} else if (strcmp(line, "lock sem") == 0 || strcmp(line, "lock mutex") == 0) {
+		lock_kind = line[5] == 's' ? LOCK_SEM : LOCK_MUTEX;
+		atomic_set(&ctrl_r_peak_us, 0);
+		printk("PI lock = %s, ctrl_r_peak_us reset\n", line + 5);
+	} else if (strcmp(line, "invert") == 0) {
+		cmd_invert();
 	} else if (strcmp(line, "threads") == 0) {
 #ifdef CONFIG_THREAD_ANALYZER
 		/* Week 4 Task D: stack high-water marks. The node has no shell (the
@@ -542,6 +722,7 @@ static void sampling_thread(void *p1, void *p2, void *p3)
 			if (k_sem_count_get(&control_sem) > 0) {
 				atomic_inc(&ctrl_missed);
 			}
+			atomic_set(&ctrl_released, released);
 			/* Task C measures from instr_samp falling to instr_ctrl
 			 * rising: this give, the block on tick_q below, and the
 			 * switch to control in between. */
@@ -556,7 +737,19 @@ static void control_thread(void *p1, void *p2, void *p3)
 {
 	while (1) {
 		k_sem_take(&control_sem, K_FOREVER);
+
+		/* Read at the take, before any wait for the PI lock: the next
+		 * release would overwrite it. */
+		uint32_t released = atomic_get(&ctrl_released);
+
 		task_control();
+
+		/* Week 6: response time from the release tick, for the RTA */
+		atomic_val_t r = k_cyc_to_us_floor32(k_cycle_get_32() - released);
+
+		if (r > atomic_get(&ctrl_r_peak_us)) {
+			atomic_set(&ctrl_r_peak_us, r);
+		}
 	}
 }
 K_THREAD_DEFINE(control_tid, CONTROL_STACK, control_thread, NULL, NULL, NULL,
@@ -581,12 +774,17 @@ static void telemetry_thread(void *p1, void *p2, void *p3)
 {
 	/* Absolute deadlines: next += 1000 does not drift with the time the
 	 * line itself takes, which a relative k_msleep(1000) would. */
-	int64_t next_ms = k_uptime_get();
+	int64_t next_ms = k_uptime_get() + TELEMETRY_MS;
 
 	while (1) {
-		next_ms += TELEMETRY_MS;
 		k_sleep(K_TIMEOUT_ABS_MS(next_ms));
+		/* Woken early by `invert` (k_wakeup): busy work, same 1 s grid. */
+		if (atomic_cas(&medium_kick, 1, 0)) {
+			task_medium();
+			continue;
+		}
 		task_telemetry();
+		next_ms += TELEMETRY_MS;
 	}
 }
 K_THREAD_DEFINE(telemetry_tid, TELEMETRY_STACK, telemetry_thread, NULL, NULL,
@@ -609,7 +807,7 @@ static void init_hw(void)
 	const struct gpio_dt_spec *outs[] = { &instr_samp, &instr_ctrl,
 					      &instr_cons, &instr_tele,
 					      &instr_flow, &instr_disp,
-					      &valve_led };
+					      &instr_lock, &valve_led };
 
 	for (size_t i = 0; i < ARRAY_SIZE(outs); i++) {
 		if (outs[i]->port) {

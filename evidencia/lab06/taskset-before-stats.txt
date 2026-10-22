@@ -1,0 +1,8 @@
+C_i on the analyzer: taskB-nolock-7s-4MHz.vcd, 12.500 s at 4 MHz (250 ns resolution)
+task                  pulses      C min     C mean      C max       period
+sampling               12498     3.00us     3.08us     3.25us     1.000 ms
+control                 1250     2.00us     2.15us     2.25us    10.001 ms
+display                    0
+telemetry                 12   101.75us   102.94us   103.50us  1000.141 ms
+console (per key)          7     2.75us   353.93us  2452.25us     0.005 ms
+console lock               0

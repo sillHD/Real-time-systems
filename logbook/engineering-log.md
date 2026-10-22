@@ -998,3 +998,200 @@ moving every task.
   moves to GPIO8/9). If anyone uses the S3, the overlay has to follow his.
 - On the C6, the board's `i2c0` sits on GPIO6/7, the pins of `instr_tele` and
   `instr_flow`. The HMI cannot be added without moving one of the two.
+
+---
+
+## Entry 05: Week 5 tracing (turned into a demo halfway)
+
+**Date:** 2026-10-21 · **Lab:** `labs/lab05_tracing.md`, SOP-05 · **Author:** Joshua
+· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+
+### Goal
+
+Stream a CTF trace off the node and use it to tell the story of one
+preemption, then price the tracer against the GPIO jitter. Halfway through the
+session the professor turned week 5 into a demo and moved the class to week 6,
+so Tasks A and B were done and Task C was not.
+
+<details>
+<summary><b>What we did</b></summary>
+
+- Course repo pulled to `7d30d89`: the course merged from 16 to 14 weeks
+  (`0474a3b`) and the trace moved to the UART jack at 4 Mbaud (`248c42f`).
+- Build `build-lab05-trace` from `firmware/kernel` with the course's
+  `trace.conf` and `uart_trace.overlay`, unchanged on the C6. Trace on the CH343
+  jack (`/dev/ttyACM0`), console on the USB jack (`/dev/ttyACM1`).
+- Two traces, 3.1 s each: idle and during `calib` (`evidencia/lab05/trace-*`),
+  reduced with our `trace_stats.py` and drawn with `trace_figure.py`.
+
+</details>
+
+<details>
+<summary><b>Problem 1: WSL shuts itself down between commands</b></summary>
+
+`usbipd attach` failed with "There is no WSL 2 distribution running". Keeping
+`wsl -d Ubuntu-24.04 --exec sleep infinity` in the background holds it up. Two
+`attach --auto-attach` launched at once fight over port 0 of `vhci_hcd`: one
+after the other.
+
+</details>
+
+<details>
+<summary><b>Problem 2: usbipd loses bytes at 4 Mbaud</b></summary>
+
+About one loss every 3 s. CTF has no framing, so the course's viewer stops at
+the first one. `trace_stats.py` resynchronises on four valid records in a row
+with growing timestamps.
+
+</details>
+
+<details>
+<summary><b>Problem 3: the C6's native USB resets the chip</b></summary>
+
+Dropping DTR before RTS on the USB jack resets the C6
+(`rst:0x15 USB_UART_HPSYS`). The console has to be opened without touching
+DTR/RTS, or a capture ends in a reboot.
+
+</details>
+
+### Result
+
+The trace confirms the analyzer's 14.5 µs switch and explains the week-4
+odd-tick lateness: the console wakes every 6 ms (`k_msleep(5)` at a 1 kHz
+tick) in the same tick ISR as sampling. Each trace event costs about 7 µs with
+interrupts blocked on the C6, so latencies read from the trace are inflated;
+numbers come from GPIO. RET §3 week 5.
+
+### Open items
+
+- Task C (jitter with tracing on and off) was not done; it only matters if the
+  course grades it after the demo.
+
+---
+
+## Entry 06: Week 6 schedulability, priority inversion and ADR-005
+
+**Date:** 2026-10-21 · **Lab:** `labs/lab06_schedulability.md` · **Author:** Joshua
+· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+
+### Goal
+
+Reproduce Buttazzo's Fig. 4.13 on the board (RM misses, EDF meets), reproduce a
+priority inversion and close it with a priority-inheritance mutex, fix the
+e-stop and `calib` at the source (ADR-005), and turn the RTA into a script fed
+with measured `C_i` and B, ready for the week-7 workshop.
+
+<details>
+<summary><b>Setup</b></summary>
+
+- One wiring for every capture: D0 to D5 on GPIO3, 4, 5, 6, 7, 10 as in week 4,
+  D6 on GPIO18 (new `instr_lock`), D7 on GPIO2 (the valve). Flow jumper removed.
+- PulseView, `fx2lafw`, 4 MHz, channels named, VCD export. Console driven by
+  `evidencia/lab06/capture_lab06.py`.
+- Firmwares: `build-lab06-rm` and `build-lab06-edf` (`firmware/fig413`),
+  `build-lab06-kernel` (before), `build-lab06-adr005` (fix, 1 kHz tick),
+  `build-lab06-adr005-10k` (final).
+
+</details>
+
+<details>
+<summary><b>What we did</b></summary>
+
+**Task A.** New app `firmware/fig413`: τ1 (2, 5) and τ2 (4, 7) on a calibrated
+loop that counts work, run and miss pins per task, RM by priority and EDF with
+`k_thread_absolute_deadline_set()` before each sleep. 60 s console runs, then
+one 2 s capture each, reduced by `vcd_fig413.py` and checked job by job against
+`fig413_sim.py`.
+
+**Task B.** Control's PI state under one lock in `firmware/kernel`, its kind
+picked at run time (`lock sem|mutex`), and `invert`: the console takes the
+lock just before a control release, control asks for it, and the console wakes
+telemetry with 20 ms of busy work. Three captures (no contention, `k_sem`,
+`k_mutex`), reduced by `vcd_lock.py`.
+
+**Task C.** `instr_flow` marks the e-stop detection; five trips per capture
+(`set 3300`, wait for `estop=1`, `set 1500`, `clear`). `calib` timed on the
+analyzer and its CPU read from the kernel's per-thread runtime counters. Before,
+fix at 1 kHz, fix at 10 kHz.
+
+**Analysis.** `analysis/rta.py` on `analysis/taskset.csv`: U, Liu & Layland,
+hyperbolic, RTA with PI blocking computed from the lock's users.
+
+</details>
+
+<details>
+<summary><b>Problem 1: under RM, τ2 missed every single job</b></summary>
+
+717 of 717, against 1 in 5 expected. `k_sleep()` to an absolute time that has
+already passed does not return at once: it waits for the next tick. A late job
+that slept anyway left up to 1 ms idle and made the next job late too. Fix: a
+late job does not sleep. Then the board missed 4 in 5, and the simulator with
+τ1's measured 2.027 ms explained it (two jobs have zero slack in the book).
+
+</details>
+
+<details>
+<summary><b>Problem 2: per-job response times of 15 ms that cannot exist</b></summary>
+
+The analyzer's clock runs 140 ppm off the board's (as in week 4): 350 µs over
+2.5 s. A fixed 7 ms release grid drifts and pins jobs to the wrong release. The
+grid is now fitted on the data. Under EDF there are no miss edges to fit on, so
+the grid comes from the τ1 jobs that started on their release.
+
+</details>
+
+<details>
+<summary><b>Problem 3: two Task B captures that held the wrong thing</b></summary>
+
+The first `sem` capture started after `invert` had already ended (PulseView
+takes a moment to start, and `invert` went out 1 s after Enter). The second
+one held a `mutex` run: the board rebooted after `lock sem` and came back with
+the default. Kept as the mutex capture. Fix in the script: arm PulseView on a
+trigger (`lock` or `cons` rising) before Enter, send `lock` after Enter, and
+warn if `invert` reports the wrong kind.
+
+</details>
+
+<details>
+<summary><b>Problem 4: the guide's fix for calib does not fit on the C6</b></summary>
+
+The S3 ticks at 10 kHz, the C6 at 1 kHz. `k_usleep(400)` rounds up to whole
+ticks plus one: 2 ms per settle, `calib` 2000 ms, still a miss of the 1 s
+deadline. The final ADR-005 build sets a 10 kHz tick: 500 ms.
+
+</details>
+
+<details>
+<summary><b>Problem 5: native_sim hung on <code>invert</code></b></summary>
+
+Two causes. Its clock only moves inside `k_busy_wait()`, so the phase loop that
+only read the clock froze it (fixed with a 10 µs busy wait per turn). And it
+ticks at 100 Hz, so sampling ran every 10 ms and control every 100 ms, never
+inside the section; with a 10 kHz tick it reproduces the board: mutex R 0.2 ms,
+semaphore R 20.2 ms and 5 misses.
+
+</details>
+
+### Result
+
+| | Value |
+|---|---|
+| Fig. 4.13, RM / EDF, 60 s | 6860 / **0** misses of τ2 (book: 1715 / 0) |
+| Control's worst R: uncontended / `k_sem` / `k_mutex` | 20.0 µs / **20.43 ms** / **0.41 ms** |
+| B (console's section) | 1.195 ms |
+| E-stop, detection to valve closed, before / after | 10.005 ms / **1.00 µs** |
+| `calib` CPU / duration, before / after | 396 / 403 ms → **10.6 / 500 ms** |
+| RTA, control with B | 1.30 ms ≤ 10 ms |
+
+ADR-002 (PI mutex) and ADR-005 (e-stop and `calib` at the source, with a 10 kHz
+tick) accepted. RET §1, §2, §3 week 6 and §4.
+
+### Open items
+
+- **Daniela's two tasks**: parameters given in class; run `rta.py --add` and
+  write the verdict in §4.
+- **PWM gating on `estop`**: after ADR-005 control can still overwrite the 0
+  duty in a few-µs window (ADR-005, cost).
+- **Flow ISR on the C6**: never measured on this board; it belongs in the task
+  set once the flow input is back.
+- **RET v1**: tag `workshop` before the week-7 session.

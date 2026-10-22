@@ -1,0 +1,11 @@
+# SoilSense Control, kernel build: the week-6 option.
+
+config LAB_ADR005
+	bool "ADR-005: calib sleeps, the e-stop closes the valve in the sampling job"
+	help
+	  Week 6 Task C, the "after" build. cmd_calib waits with k_usleep(400)
+	  instead of spinning, and the sampling job that detects the overpressure
+	  sets the duty to 0, so its own PWM step drives the valve low. Off, the
+	  node behaves as shipped: the "before" build.
+
+source "Kconfig.zephyr"

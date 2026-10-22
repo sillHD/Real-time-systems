@@ -1,0 +1,101 @@
+ESP-ROM:esp32c6-20220919
+Build:Sep 19 2022
+rst:0x1 (POWERON),boot:0x6f (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:2
+load:0x40800000,len:0xa40c
+load:0x4080a420,len:0x17e0
+SHA-256 comparison failed:
+Calculated: 261df56d2bcf6b1fc3a41dbcca8fb5db644a4828e13d8b32e208729f207e3d8b
+Expected: 00000000d0430000000000000000000000000000000000000000000000000000
+Attempting to boot anyway...
+entry 0x40800284
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Oct 21 2026 20:35:57
+I (soc_init): chip revision: v0.2
+I (flash_init): SPI Speed      : 80MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 8MB
+I (boot): DRAM	: lma=00000020h vma=40800000h size=0a40ch ( 41996)
+I (boot): DRAM	: lma=0000a434h vma=4080a420h size=017e0h (  6112)
+I (boot): DROM	: lma=00010000h vma=42800000h size=00ce4h (  3300)
+I (boot): IROM	: lma=00020000h vma=42000000h size=04160h ( 16736)
+I (boot): libc heap size 430 kB.
+I (spi_flash): detected chip: generic
+I (spi_flash): flash io: dio
+E (spi_flash): Detected size(4096k) smaller than the size in the binary image header(8192k). Probe failed.
+*** Booting Zephyr OS build v4.4.0-13771-gb9df9f46ae46 ***
+SoilSense Control: kernel build (esp32c6_devkitc)
+type 'help'
+t=1000 p_mv=1494 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=2000 p_mv=1511 sp_mv=1500 duty=44 flow_x100=0 estop=0 backlog=0
+t=3000 p_mv=1491 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=4000 p_mv=1513 sp_mv=1500 duty=44 flow_x100=0 estop=0 backlog=0
+t=5000 p_mv=1492 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=6000 p_mv=1499 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=7000 p_mv=1507 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=8000 p_mv=1488 sp_mv=1500 duty=47 flow_x100=0 estop=0 backlog=0
+t=9000 p_mv=1513 sp_mv=1500 duty=44 flow_x100=0 estop=0 backlog=0
+t=10000 p_mv=1496 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=11000 p_mv=1487 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+set 3300
+setpoint = 3300 mV
+t=12000 p_mv=1637 sp_mv=3300 duty=0 flow_x100=0 estop=1 backlog=0
+set 1500
+setpoint = 1500 mV
+clear
+e-stop cleared
+t=13000 p_mv=663 sp_mv=1500 duty=70 flow_x100=0 estop=0 backlog=0
+t=14000 p_mv=1513 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+set 3300
+setpoint = 3300 mV
+t=15000 p_mv=58 sp_mv=3300 duty=0 flow_x100=0 estop=1 backlog=0
+set 1500
+setpoint = 1500 mV
+clear
+e-stop cleared
+t=16000 p_mv=1327 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=17000 p_mv=1502 sp_mv=1500 duty=44 flow_x100=0 estop=0 backlog=0
+set 3300
+setpoint = 3300 mV
+t=18000 p_mv=35 sp_mv=3300 duty=0 flow_x100=0 estop=1 backlog=0
+set 1500
+setpoint = 1500 mV
+clear
+e-stop cleared
+t=19000 p_mv=1220 sp_mv=1500 duty=48 flow_x100=0 estop=0 backlog=0
+t=20000 p_mv=1488 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+set 3300
+setpoint = 3300 mV
+t=21000 p_mv=47 sp_mv=3300 duty=0 flow_x100=0 estop=1 backlog=0
+set 1500
+setpoint = 1500 mV
+clear
+e-stop cleared
+t=22000 p_mv=993 sp_mv=1500 duty=56 flow_x100=0 estop=0 backlog=0
+t=23000 p_mv=1486 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+set 3300
+setpoint = 3300 mV
+t=24000 p_mv=57 sp_mv=3300 duty=0 flow_x100=0 estop=1 backlog=0
+set 1500
+setpoint = 1500 mV
+clear
+e-stop cleared
+t=25000 p_mv=1359 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=26000 p_mv=1502 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=27000 p_mv=1506 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=28000 p_mv=1485 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=29000 p_mv=1503 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=30000 p_mv=1494 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=31000 p_mv=1507 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=32000 p_mv=1502 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=33000 p_mv=1481 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=34000 p_mv=1510 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=35000 p_mv=1494 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=36000 p_mv=1500 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=37000 p_mv=1502 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=38000 p_mv=1479 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=39000 p_mv=1497 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=40000 p_mv=1490 sp_mv=1500 duty=46 flow_x100=0 estop=0 backlog=0
+t=41000 p_mv=1507 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0
+t=42000 p_mv=1502 sp_mv=1500 duty=45 flow_x100=0 estop=0 backlog=0

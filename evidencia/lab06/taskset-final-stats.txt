@@ -1,0 +1,8 @@
+C_i on the analyzer: taskC-after-estop-30s-4MHz.vcd, 50.000 s at 4 MHz (250 ns resolution)
+task                  pulses      C min     C mean      C max       period
+sampling               49993     3.00us     3.14us     3.25us     1.000 ms
+control                 4999     1.75us     2.13us     2.25us    10.001 ms
+display                    0
+telemetry                 50    99.25us   103.71us   113.50us  1000.141 ms
+console (per key)        119     2.75us     6.47us    64.75us   112.044 ms
+console lock               0

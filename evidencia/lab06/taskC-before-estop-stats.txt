@@ -1,0 +1,9 @@
+e-stop, before: taskC-before-estop-30s-4MHz.vcd
+5 trips (estop pulses complete in the capture)
+  detection -> control starts   control ends -> valve closed   detection -> valve closed   valve open at detection
+                      1.016 ms                        0.984 ms                      2.001 ms   yes
+                      9.017 ms                        0.983 ms                     10.002 ms   yes
+                      9.017 ms                        0.986 ms                     10.005 ms   yes
+                      1.013 ms                        0.984 ms                      1.998 ms   yes
+                      9.017 ms                        0.986 ms                     10.005 ms   yes
+detection -> valve closed, min / mean / max over 5 trips: 1998.25 / 6802.40 / 10005.25 us

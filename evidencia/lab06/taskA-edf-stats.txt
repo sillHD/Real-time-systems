@@ -1,0 +1,16 @@
+Fig. 4.13 under EDF: taskA-edf-2s-4MHz.vcd
+capture 2.500 s, 2.493 s of complete tau1 jobs, 71.2 hyperperiods
+tau2 period fitted on the analyzer's clock: 7000.959 us (+137 ppm against the board)
+
+tau1: 499 jobs, run pin 2000.50 / 2004.94 / 2008.50 us (min / mean / max), misses 0
+tau2: 356 jobs, R 4195.40 / 5311.84 / 6127.44 us (release -> end, release grid from sync starts)
+tau2 misses: 0
+preemptions (tau1 starts while tau2 is running): 71, 1.00 per 35 ms
+
+tau2 by release offset inside the hyperperiod:
+  offset   jobs  misses   R max (us)   worst finish - deadline (us)
+     0 ms    71      0      6024.15      -976.80
+     7 ms    71      0      5063.65     -1937.31
+    14 ms    71      0      6127.44      -873.52
+    21 ms    72      0      5166.73     -1834.23
+    28 ms    71      0      4206.07     -2794.89

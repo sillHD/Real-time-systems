@@ -9,3 +9,6 @@ build-*/
 twister-out*/
 *.save
 *.orig
+
+# caches de Python de los scripts de evidencia
+__pycache__/

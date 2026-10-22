@@ -1,0 +1,6 @@
+Task B, nolock: taskB-nolock-7s-4MHz.vcd
+capture 12.500 s, 1250 control jobs, 0 lock holds by the console
+control R (sampling rise -> ctrl fall), min / mean / max: 19.50 / 19.69 / 20.00 us
+control pulse (start -> end, lock wait included): 2.00 / 2.15 / 2.25 us
+control R > 10 ms (deadline): 0
+telemetry line (not the medium busy work): 101.75 / 102.94 / 103.50 us

@@ -26,6 +26,9 @@
 		instr_tele: instr_tele { gpios = <&gpio0 6 GPIO_ACTIVE_HIGH>; };
 		instr_flow: instr_flow { gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>; };
 		instr_disp: instr_disp { gpios = <&gpio0 10 GPIO_ACTIVE_HIGH>; };
+		/* Week 6 Task B: high while the console holds the shared lock (B).
+		 * GPIO18 is claimed by no board peripheral. */
+		instr_lock: instr_lock { gpios = <&gpio0 18 GPIO_ACTIVE_HIGH>; };
 	};
 
 	keys {

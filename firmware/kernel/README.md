@@ -38,3 +38,34 @@ west flash --build-dir build-lab04-c6-kernel
 west build -p -b native_sim/native/64 --build-dir build-lab04-native ~/ret-equipo/firmware/kernel -- -DCONFIG_THREAD_ANALYZER=n
 ./build-lab04-native/zephyr/zephyr.exe -uart_stdinout
 ```
+
+## Week 6
+
+Same thread plan; three additions (RET §2 ADR-002 and ADR-005, §3 week 6):
+
+- **The PI lock** (Task B). Control's PI state (`setpoint_mv`, `integral_mv`)
+  is taken under one lock by control and by the console's `set` and `clear`.
+  `lock sem|mutex` picks its kind at run time (default: the `k_mutex`).
+  `invert` forces the inversion five times and reports control's worst R, the
+  longest hold and the misses. `instr_lock` (GPIO18) is high while the console
+  holds the lock. `status` adds `ctrl_r_peak_us` (release tick to control's end)
+  and the lock kind.
+- **The e-stop mark** (Task C). `instr_flow` follows `estop` from the sampling
+  job that detects it, so the flow input has to stay unplugged.
+- **ADR-005** (Task C). `CONFIG_LAB_ADR005` (`adr005.conf`): `calib` sleeps
+  (`k_usleep(400)`) and the detecting sampling job sets the duty to 0. With the
+  C6's 1 kHz tick each sleep lasts 2 ms and `calib` 2 s, so the final build also
+  sets a 10 kHz tick. `calib` prints its duration and the console thread's CPU.
+
+```bash
+APP=~/ret-equipo/firmware/kernel; B=esp32c6_devkitc/esp32c6/hpcore
+west build -p -b $B --build-dir build-lab06-kernel $APP                  # before
+west build -p -b $B --build-dir build-lab06-adr005 $APP -- -DEXTRA_CONF_FILE=adr005.conf
+west build -p -b $B --build-dir build-lab06-adr005-10k $APP -- \
+    -DEXTRA_CONF_FILE=adr005.conf -DCONFIG_SYS_CLOCK_TICKS_PER_SEC=10000  # final
+
+# native_sim ticks at 100 Hz: sampling would run every 10 ms and `invert` could
+# never line up with control. Give it the 10 kHz tick as well.
+west build -p -b native_sim/native/64 --build-dir build-lab06-native $APP -- \
+    -DCONFIG_THREAD_ANALYZER=n -DCONFIG_SYS_CLOCK_TICKS_PER_SEC=10000
+```

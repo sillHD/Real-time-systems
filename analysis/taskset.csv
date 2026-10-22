@@ -1,0 +1,7 @@
+name,prio,C_us,ovh_us,T_us,D_us,S_us,cs_us,req,source
+sampling,2,3.25,33.5,1000,1000,0,0,REQ-CTRL-03/04,"C: analyzer max, taskC-after-estop (50 s, final build). ovh: tick ISR to thread start 19 us (lat_peak_us) + switch out 14.5 us (week 4 Task C)"
+control,3,2.25,29,10000,10000,0,2.25,REQ-CTRL-01,"C: analyzer max, same capture; its whole body holds the PI lock. ovh: 2 switches x 14.5 us"
+flow_batch,5,77.75,29,200000,200000,0,0,REQ-CTRL-05,"C: analyzer max, week 4 kernel-calib-flow (C6). T: 100 pulses at the 500 Hz of REQ-CTRL-05. Flow input unplugged in week 6"
+display,7,0,29,50000,50000,0,0,-,"No HMI on the C6: the body returns at once (no pulse in 50 s). Only its wake-up costs"
+telemetry,8,113.5,29,1000000,1100000,0,0,REQ-CTRL-06,"C: analyzer max, taskC-after-estop. D: 1000 ms + the 100 ms REQ-CTRL-06 tolerates"
+console,9,10584,29,1000000,1000000,489400,1195,REQ-CONS-01,"C: calib CPU after ADR-005, runtime counters (taskC-calib-cpu.txt). S: 500.2 ms duration (analyzer) - 10.6 ms CPU, spent asleep. cs: longest PI-lock hold, Task B mutex capture (B = 1.195 ms)"

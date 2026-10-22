@@ -1,0 +1,16 @@
+Fig. 4.13 under RM: taskA-rm-2s-4MHz.vcd
+capture 2.500 s, 2.492 s of complete tau1 jobs, 71.2 hyperperiods
+tau2 period fitted on the analyzer's clock: 7000.993 us (+142 ppm against the board)
+
+tau1: 499 jobs, run pin 2000.50 / 2002.53 / 2007.75 us (min / mean / max), misses 0
+tau2: 356 jobs, R 6203.95 / 7337.67 / 8146.43 us (release -> end, release grid from miss2)
+tau2 misses: 286 of 356 jobs (80.3%), 4.02 per 35 ms; lateness (miss pin) 88.75 / 618.24 / 1147.25 us
+preemptions (tau1 starts while tau2 is running): 428, 6.01 per 35 ms
+
+tau2 by release offset inside the hyperperiod:
+  offset   jobs  misses   R max (us)   worst finish - deadline (us)
+     0 ms    71     71      8054.96     +1053.97
+     7 ms    71     71      7088.83       +87.83
+    14 ms    72     72      8146.43     +1145.44
+    21 ms    71     71      7180.32      +179.33
+    28 ms    71      0      6207.20      -793.79

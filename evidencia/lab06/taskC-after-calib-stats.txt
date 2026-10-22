@@ -1,0 +1,4 @@
+calib: taskC-after-calib-5s-4MHz.vcd
+console pulse (the whole command): 500.174 ms
+sampling during it: 500 jobs, period 997.00 / 1000.14 / 1003.00 us (min / mean / max)
+control during it: 50 jobs, period 10000.50 / 10001.41 / 10002.25 us

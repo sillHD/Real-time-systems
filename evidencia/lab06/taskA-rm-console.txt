@@ -1,0 +1,14 @@
+fig413 RM  tau1 C=2 T=5  tau2 C=4 T=7  U=0.971
+loops_per_ms=15997  spin_ms(2)=2001 us
+t= 5 s  tau1 jobs=1001 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=715 miss=572 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=10 s  tau1 jobs=2002 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=1430 miss=1144 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=15 s  tau1 jobs=3003 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=2145 miss=1716 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=20 s  tau1 jobs=4004 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=2860 miss=2288 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=25 s  tau1 jobs=5005 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=3575 miss=2860 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=30 s  tau1 jobs=6006 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=4290 miss=3432 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=35 s  tau1 jobs=7007 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=5005 miss=4004 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=40 s  tau1 jobs=8001 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=5715 miss=4572 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=45 s  tau1 jobs=9002 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=6430 miss=5144 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=50 s  tau1 jobs=10003 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=7145 miss=5716 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=55 s  tau1 jobs=11004 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=7860 miss=6288 Rmax=8167 us late_max=1167 us wake_max=206 us
+t=60 s  tau1 jobs=12005 miss=0 Rmax=2027 us late_max=0 us wake_max=19 us  tau2 jobs=8575 miss=6860 Rmax=8167 us late_max=1167 us wake_max=206 us

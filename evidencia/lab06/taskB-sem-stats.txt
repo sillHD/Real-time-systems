@@ -1,0 +1,16 @@
+Task B, sem: taskB-sem-5s-4MHz.vcd
+capture 5.000 s, 495 control jobs, 4 lock holds by the console
+control R (sampling rise -> ctrl fall), min / mean / max: 18.50 / 229.22 / 20430.00 us
+control pulse (start -> end, lock wait included): 1.50 / 207.59 / 20412.25 us
+control R > 10 ms (deadline): 5
+telemetry line (not the medium busy work): 103.25 / 103.30 / 103.50 us
+
+per round (us; t = 0 at the console taking the lock):
+  control asks   medium runs (start..end)   lock released   control ends     B (lock width)   control R
+        826.5      854.2.. 20859.5          21195.2       21209.5          21195.2     20400.2
+        827.5      856.0.. 20860.8          21225.5       21239.8          21225.5     20430.0
+        827.2      855.0.. 20860.0          21224.8       21239.0          21224.8     20429.0
+        827.8      855.8.. 20860.8          21196.5       21210.8          21196.5     20400.5
+B (lock width): 21195.25 / 21210.50 / 21225.50 us
+control R in these rounds: 20400.25 / 20414.94 / 20430.00 us
+rounds where the medium ran while the console held the lock: 4 of 4
