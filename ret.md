@@ -1,6 +1,6 @@
 # RET — Timing Evidence Report
 
-**Team:** Joshua · David Henao Rojas · Ismael Cortés Ramírez
+**Team:** Joshua · Ismael Cortés Ramírez
 **Boards:** NUCLEO-L476RG (weeks 1–2) · ESP32-C6-DevKitC (from week 3)
 **Optional comparison:** ESP32-S3-DevKitC
 **Living** document: updated every week; handed in at the workshop (week 7, tag

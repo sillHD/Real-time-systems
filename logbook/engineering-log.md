@@ -236,7 +236,7 @@ It sits in the RTOS idle loop, so any script has to wrap it in `timeout`.
 ## Entry 02: Week 2 superloop, run and read
 
 **Date:** 2026-09-10 · **Lab:** `labs/lab02_superloop.md` · **Author:** Joshua
-· **Board:** NUCLEO-L476RG · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+· **Board:** NUCLEO-L476RG · **Team:** Joshua, Ismael Cortés Ramírez
 
 ### Goal
 
@@ -262,7 +262,7 @@ RET §3.
 | Analyzer software | PulseView (sigrok), driver `fx2lafw` over WinUSB |
 | Capture settings | 8 channels, 4 MHz (250 ns resolution), 200 M samples = 49.999 s |
 
-The team is now three: David Henao Rojas and Ismael Cortés Ramírez joined, which
+Ismael Cortés Ramírez joined the team, which
 closes the open item carried from entry 01.
 
 </details>
@@ -530,7 +530,7 @@ Four results worth carrying forward:
 - REQ-CTRL-02 has no direct measurement: it is bounded by the control period
   (worst case 14.77 ms against a 5 ms deadline). Triggering a real overpressure
   and timing detection to actuation would measure it end to end.
-- Add David and Ismael as collaborators on this repository.
+- Add Ismael as a collaborator on this repository.
 - Install the Xtensa toolchain before week 3, and buy the ESP32-S3.
 
 ---
@@ -538,7 +538,7 @@ Four results worth carrying forward:
 ## Entry 03: Week 3 the S3 port and the first thread
 
 **Date:** 2026-09-23 · **Lab:** `labs/lab03_port.md` · **Author:** Joshua
-· **Board:** none yet (ESP32-S3-DevKitC not delivered) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+· **Board:** none yet (ESP32-S3-DevKitC not delivered) · **Team:** Joshua, Ismael Cortés Ramírez
 
 ### Goal
 
@@ -727,14 +727,14 @@ argument for threads has to be paid for in something.
   case.
 - Confirm the HMI really talks on GPIO8/GPIO9 with the analyzer, since that fix
   is reasoned from the board files and not yet observed.
-- Still pending from entry 02: add David and Ismael as collaborators here.
+- Still pending from entry 02: add Ismael as a collaborator here.
 
 ---
 
 ## Entry 04: Week 4 the full migration and the A/B (and week 3 closed on the C6)
 
 **Date:** 2026-10-07 · **Lab:** `labs/lab04_ipc.md`, plus the missing cells of `labs/lab03_port.md` · **Author:** Joshua
-· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, Ismael Cortés Ramírez
 
 ### Goal
 
@@ -1004,7 +1004,7 @@ moving every task.
 ## Entry 05: Week 5 tracing (turned into a demo halfway)
 
 **Date:** 2026-10-21 · **Lab:** `labs/lab05_tracing.md`, SOP-05 · **Author:** Joshua
-· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, Ismael Cortés Ramírez
 
 ### Goal
 
@@ -1072,7 +1072,7 @@ numbers come from GPIO. RET §3 week 5.
 ## Entry 06: Week 6 schedulability, priority inversion and ADR-005
 
 **Date:** 2026-10-21 · **Lab:** `labs/lab06_schedulability.md` · **Author:** Joshua
-· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, David Henao Rojas, Ismael Cortés Ramírez
+· **Board:** ESP32-C6-DevKitC (`esp32c6_devkitc/esp32c6/hpcore`) · **Team:** Joshua, Ismael Cortés Ramírez
 
 ### Goal
 
